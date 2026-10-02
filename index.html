@@ -67,6 +67,7 @@ header.top h1 { font-size: 15px; font-weight: 600; margin: 0; color: var(--muted
 .banner span { flex: 1 1 200px; }
 
 /* Cards */
+header.top h1 .sync { font-weight: 400; font-size: 12px; margin-left: 6px; opacity: .85; }
 .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 26px; margin-bottom: 18px; position: relative; }
 .card h2 { font-size: 13px; font-weight: 600; letter-spacing: -.005em; color: var(--muted); margin: 0 0 18px; }
 .card h2 small { font-weight: 400; }
@@ -265,7 +266,7 @@ summary { cursor: pointer; font-size: 13px; font-weight: 500; color: var(--fat);
 <body>
 <div class="wrap">
   <header class="top">
-    <h1>Macro Tracker</h1>
+    <h1>Macro Tracker <span class="sync" id="syncState"></span></h1>
     <button class="icon-btn" id="openSettings" aria-label="Settings and goals" title="Settings">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
@@ -511,6 +512,14 @@ summary { cursor: pointer; font-size: 13px; font-weight: 500; color: var(--fat);
     <p class="calc-note">Food search uses Open Food Facts first. If it is down or finds nothing, it falls back to USDA FoodData Central. Without your own free key (fdc.nal.usda.gov) that fallback is limited to a few lookups an hour. The key stays on this device and is left out of backups.</p>
 
     <hr class="divider">
+    <h3>History sync (GitHub)</h3>
+    <p class="calc-note">Keeps your whole history in the <b>data</b> branch of <b>MrtOzdgn/macro-tracker</b>, so it survives clearing the browser and works across devices. The repository is public, so anyone can read this file.</p>
+    <div class="field"><label for="sTok">GitHub token (fine-grained, this repo only, Contents: read and write)</label><input id="sTok" type="password" autocomplete="new-password" spellcheck="false" placeholder="github_pat_…"></div>
+    <p class="calc-note" id="syncInfo" role="status"></p>
+    <button type="button" class="btn small" id="syncNowBtn">Sync now</button>
+    <p class="calc-note" style="margin-top:10px">Create the token at github.com/settings/personal-access-tokens/new. It is stored only on this device and never written to the repo or to backups.</p>
+
+    <hr class="divider">
     <h3>Backup</h3>
     <p class="calc-note" id="backupInfo"></p>
     <div class="actions" style="justify-content:flex-start">
@@ -573,6 +582,8 @@ const fmt = n => (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFr
 const kcalOf = m => m.p * 4 + m.c * 4 + m.f * 9;
 const keyOfName = n => n.trim().toLowerCase();
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const GH_TOKEN_RE = /^(github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,})$/;
+const GH = { owner: 'MrtOzdgn', repo: 'macro-tracker', branch: 'data', path: 'tracker-data.json' };
 
 function dateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -593,7 +604,7 @@ function defaults() {
     foods: STARTER_FOODS.map(f => ({ id: uid(), ...cleanNutr(f), name: f.name })),
     log: {},
     weights: {},
-    settings: { unit: 'kg', profile: null, usdaKey: '', lastBackup: null, backupSnooze: null },
+    settings: { unit: 'kg', profile: null, usdaKey: '', ghToken: '', lastBackup: null, backupSnooze: null },
   };
 }
 // Per-serving nutrition. `kcal` is only kept when it differs from what the macros imply.
@@ -613,7 +624,7 @@ function cleanGoals(g, fb) {
   if (!kcal) kcal = Math.round(kcalOf({ p, c, f })) || fb.kcal;
   return { kcal, p, c, f };
 }
-function sanitize(raw) {
+function sanitize(raw, fromRemote = false) {
   const d = defaults();
   if (!raw || typeof raw !== 'object') return d;
   const fb = defaultGoals();
@@ -672,11 +683,15 @@ function sanitize(raw) {
       activity: ['sed', 'light', 'mod', 'high', 'ath'].includes(pr.activity) ? pr.activity : 'mod',
       goal: ['cut', 'keep', 'gain'].includes(pr.goal) ? pr.goal : 'keep',
     } : null,
+    ghToken: typeof s.ghToken === 'string' && GH_TOKEN_RE.test(s.ghToken.trim()) ? s.ghToken.trim() : '',
     usdaKey: typeof s.usdaKey === 'string' && /^[A-Za-z0-9]{20,60}$/.test(s.usdaKey.trim()) ? s.usdaKey.trim() : '',
     lastBackup: Number.isFinite(s.lastBackup) ? s.lastBackup : null,
     backupSnooze: Number.isFinite(s.backupSnooze) ? s.backupSnooze : null,
   };
-  return { v: 2, goalHistory: history, dayTypes, foods, log, weights, settings };
+  // savedAt marks the last local change. Pre-sync data that has history counts as an unsynced local change.
+  const hasData = Object.keys(log).length > 0 || Object.keys(weights).length > 0;
+  const savedAt = Number.isFinite(raw.savedAt) && raw.savedAt > 0 ? raw.savedAt : (hasData && !fromRemote ? Date.now() : 0);
+  return { v: 2, savedAt, goalHistory: history, dayTypes, foods, log, weights, settings };
 }
 let memoryOnly = false;
 function load() {
@@ -685,9 +700,11 @@ function load() {
     return raw ? sanitize(JSON.parse(raw)) : defaults();
   } catch { return defaults(); }
 }
-function save() {
+function save(stamp = true) {
+  if (stamp) state.savedAt = Date.now();
   try { localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch { if (!memoryOnly) { memoryOnly = true; toast('Storage unavailable. Changes will be lost on reload, so export a backup.'); } }
+  catch { if (!memoryOnly) { memoryOnly = true; toast('Storage unavailable here. Changes are kept only if GitHub sync is on, or export a backup.'); } }
+  if (stamp) scheduleSync();
 }
 let state = load();
 let viewKey = todayKey();
@@ -1517,7 +1534,7 @@ function openSettings(focusId) {
   const tr = e.training || e.rest;
   $('#tK').value = tr.kcal; $('#tP').value = tr.p; $('#tC').value = tr.c; $('#tF').value = tr.f;
   $('#useTrain').checked = !!e.training; $('#trainBox').hidden = !e.training; setTrainRequired(!!e.training);
-  $('#sUnit').value = state.settings.unit; $('#sKey').value = state.settings.usdaKey; calcUnit = state.settings.unit; syncCalcUnit(calcUnit);
+  $('#sUnit').value = state.settings.unit; $('#sKey').value = state.settings.usdaKey; $('#sTok').value = state.settings.ghToken; calcUnit = state.settings.unit; syncCalcUnit(calcUnit);
   const pr = state.settings.profile;
   $('#cSex').value = pr ? pr.sex : 'm';
   $('#cAge').value = pr && pr.age ? pr.age : '';
@@ -1592,6 +1609,8 @@ $('#setForm').addEventListener('submit', ev => {
     ? { kcal: Math.round(num($('#tK').value)), p: num($('#tP').value), c: num($('#tC').value), f: num($('#tF').value) }
     : null;
   if (training && !training.kcal) return;
+  const ghToken = $('#sTok').value.trim();
+  if (ghToken && !GH_TOKEN_RE.test(ghToken)) { toast('That doesn’t look like a GitHub token. It should start with github_pat_.'); return; }
   const usdaKey = $('#sKey').value.trim();
   if (usdaKey && !/^[A-Za-z0-9]{20,60}$/.test(usdaKey)) { toast('That USDA key doesn’t look right. Keys are about 40 letters and numbers.'); return; }
   const today = todayKey(), cur = goalEntryFor(today);
@@ -1603,6 +1622,8 @@ $('#setForm').addEventListener('submit', ev => {
   }
   state.settings.unit = $('#sUnit').value === 'lb' ? 'lb' : 'kg';
   state.settings.usdaKey = usdaKey;
+  const tokenChanged = state.settings.ghToken !== ghToken;
+  state.settings.ghToken = ghToken;
   const age = parseFloat($('#cAge').value), hv = parseFloat($('#cHeight').value);
   if (age > 0 || hv > 0) {
     state.settings.profile = {
@@ -1612,6 +1633,7 @@ $('#setForm').addEventListener('submit', ev => {
     };
   }
   save(); closeDlg(setDlg); render(); toast('Saved');
+  if (tokenChanged) syncNow({ manual: true });
 });
 // Removing a saved food applies immediately, so Cancel only discards goal and preference edits
 $('#cancelSet').addEventListener('click', () => closeDlg(setDlg));
@@ -1626,9 +1648,11 @@ function markBackedUp() {
   state.settings.lastBackup = Date.now(); state.settings.backupSnooze = null;
   save(); renderBanner(); if (setDlg.open) updateBackupInfo();
 }
+// Everything that leaves the device (backups, GitHub) omits personal keys
+const exportable = () => ({ ...state, settings: { ...state.settings, usdaKey: '', ghToken: '' } });
 function backupJson() {
   state.settings.lastBackup = Date.now();
-  return JSON.stringify({ ...state, settings: { ...state.settings, usdaKey: '' } }, null, 2); // never export the personal key
+  return JSON.stringify(exportable(), null, 2);
 }
 function exportJson() {
   download(`macro-tracker-${todayKey()}.json`, backupJson(), 'application/json');
@@ -1651,6 +1675,11 @@ async function backupNow() {
   markBackedUp(); toast('Backup downloaded');
 }
 $('#exportBtn').addEventListener('click', exportJson);
+$('#syncNowBtn').addEventListener('click', () => {
+  const t = $('#sTok').value.trim();
+  if (t !== state.settings.ghToken) { if (t && !GH_TOKEN_RE.test(t)) { setSync('error', 'That doesn’t look like a GitHub token.'); return; } state.settings.ghToken = t; save(false); }
+  syncNow({ manual: true });
+});
 $('#backupNowBtn').addEventListener('click', backupNow);
 $('#bannerNow').addEventListener('click', backupNow);
 $('#bannerLater').addEventListener('click', () => { state.settings.backupSnooze = Date.now() + 3 * DAY; save(); renderBanner(); });
@@ -1671,8 +1700,9 @@ $('#importFile').addEventListener('change', async ev => {
     const parsed = JSON.parse(await file.text());
     if (!parsed || typeof parsed !== 'object' || !('log' in parsed || 'goals' in parsed || 'goalHistory' in parsed)) throw new Error('bad');
     if (!confirm('Replace all current data with this backup?')) return;
-    const keepKey = state.settings.usdaKey;
-    state = sanitize(parsed); state.settings.usdaKey = keepKey; save(); closeDlg(setDlg); render(); toast('Backup imported');
+    const keep = { usdaKey: state.settings.usdaKey, ghToken: state.settings.ghToken };
+    state = sanitize(parsed); Object.assign(state.settings, keep); save(); closeDlg(setDlg); render(); toast('Backup imported');
+    syncNow({ force: true }); // an import replaces the GitHub copy too
   } catch { toast('That file is not a valid backup'); }
 });
 
@@ -1737,10 +1767,133 @@ function toast(msg, opts = {}) {
   toastTimer = setTimeout(hideToast, opts.undo ? 6000 : 2600);
 }
 
+
+/* ================= GitHub history sync ================= */
+const SYNC_KEY = 'macro-tracker-sync';
+let syncBase = 0;                       // savedAt of the last state known to match GitHub
+try { syncBase = Number(localStorage.getItem(SYNC_KEY)) || 0; } catch { /* ignore */ }
+let remoteMissing = true, remoteSha = null, syncBusy = false, syncAgain = false, syncTimer = null, lastPull = 0, syncKind = 'idle', syncDetail = '';
+const ghUrl = `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`;
+const ghHeaders = raw => {
+  const hd = { Accept: raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json' };
+  if (state.settings.ghToken) hd.Authorization = 'Bearer ' + state.settings.ghToken;
+  return hd;
+};
+const toB64 = str => {
+  const bytes = new TextEncoder().encode(str); let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
+const fromB64 = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0)));
+const setSyncBase = v => { syncBase = v; try { localStorage.setItem(SYNC_KEY, String(v)); } catch { /* ignore */ } };
+
+function setSync(kind, detail = '') {
+  syncKind = kind; syncDetail = detail;
+  const hasToken = !!state.settings.ghToken;
+  const head = { syncing: 'Syncing…', ok: hasToken ? 'Synced' : '', dirty: 'Not saved to GitHub', error: 'Sync paused', idle: '' }[kind] || '';
+  $('#syncState').textContent = head ? '· ' + head : '';
+  const info = { syncing: 'Syncing…', ok: hasToken ? 'Up to date.' : remoteMissing ? 'Nothing is saved to GitHub yet. Add a token to start keeping your history there.' : 'Loaded from GitHub. Add a token to save changes there.', dirty: 'Changes are saved on this device only. Add a GitHub token to keep them in the repo.', error: '', idle: '' }[kind];
+  $('#syncInfo').textContent = (detail || info || '');
+}
+function mergeStates(a, b) { // a = local, b = remote; keeps everything from both, local wins ties
+  const log = {};
+  for (const k of new Set([...Object.keys(a.log), ...Object.keys(b.log)])) {
+    const ids = new Set((a.log[k] || []).map(e => e.id));
+    log[k] = [...(a.log[k] || []), ...(b.log[k] || []).filter(e => !ids.has(e.id))];
+  }
+  const names = new Set(a.foods.map(f => keyOfName(f.name)));
+  const hist = new Map();
+  for (const x of [...b.goalHistory, ...a.goalHistory]) hist.set(x.from, x);
+  return sanitize({
+    v: 2, savedAt: Date.now(), log,
+    weights: { ...b.weights, ...a.weights }, dayTypes: { ...b.dayTypes, ...a.dayTypes },
+    foods: [...a.foods, ...b.foods.filter(f => !names.has(keyOfName(f.name)))],
+    goalHistory: [...hist.values()], settings: a.settings,
+  });
+}
+async function fetchRemote() {
+  const res = await fetch(`${ghUrl}?ref=${encodeURIComponent(GH.branch)}`, { headers: ghHeaders(false), cache: 'no-store' });
+  if (res.status === 404) return { missing: true };
+  if (res.status === 401 || res.status === 403) { const e = new Error('auth'); e.auth = true; e.status = res.status; throw e; }
+  if (!res.ok) throw new Error('GitHub answered ' + res.status);
+  const meta = await res.json();
+  let text;
+  if (meta.content && meta.encoding === 'base64') text = fromB64(meta.content);
+  else { // files over 1 MB come back without content
+    const r2 = await fetch(`${ghUrl}?ref=${encodeURIComponent(GH.branch)}`, { headers: ghHeaders(true), cache: 'no-store' });
+    if (!r2.ok) throw new Error('GitHub answered ' + r2.status);
+    text = await r2.text();
+  }
+  return { sha: meta.sha, data: JSON.parse(text) };
+}
+async function pushRemote() {
+  const stamp = state.savedAt;
+  const body = { message: 'Update tracker data', content: toB64(JSON.stringify(exportable())), branch: GH.branch };
+  if (remoteSha) body.sha = remoteSha;
+  const res = await fetch(ghUrl, { method: 'PUT', headers: { ...ghHeaders(false), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (res.status === 409 || res.status === 422) { const e = new Error('conflict'); e.conflict = true; throw e; }
+  if (res.status === 401 || res.status === 403) { const e = new Error('auth'); e.auth = true; e.status = res.status; throw e; }
+  if (res.status === 404) throw new Error('The data branch wasn’t found. Create a branch named “data” in the repository.');
+  if (!res.ok) throw new Error('GitHub answered ' + res.status);
+  const j = await res.json();
+  remoteSha = j.content && j.content.sha;
+  setSyncBase(stamp);
+}
+function adoptRemote(r) {
+  const keep = { usdaKey: state.settings.usdaKey, ghToken: state.settings.ghToken };
+  state = r; Object.assign(state.settings, keep);
+  setSyncBase(state.savedAt); save(false); render();
+}
+function scheduleSync() {
+  if (!state.settings.ghToken) { if (state.savedAt > syncBase) setSync('dirty'); return; }
+  clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(), 3000);
+}
+// Always pull before pushing, so a fresh or stale device can never overwrite newer history
+async function syncNow(opts = {}) {
+  if (syncBusy) { syncAgain = true; return; }
+  if (document.querySelector('dialog[open]') && !opts.manual) { clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(opts), 5000); return; }
+  syncBusy = true; setSync('syncing');
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const remote = await fetchRemote();
+      lastPull = Date.now();
+      remoteSha = remote.sha || null; remoteMissing = !!remote.missing;
+      const rState = remote.missing ? null : sanitize(remote.data, true);
+      const hasToken = !!state.settings.ghToken;
+      let dirty = state.savedAt > syncBase || !!opts.force;
+      if (rState && rState.savedAt > syncBase && !opts.force) {
+        if (!dirty) { adoptRemote(rState); if (!opts.quiet) toast('Loaded your history from GitHub'); dirty = false; }
+        else { state = mergeStates(state, rState); save(false); render(); dirty = true; }
+      }
+      if (dirty && !hasToken) { setSync('dirty'); break; }
+      if (dirty) {
+        try { await pushRemote(); } catch (err) { if (err.conflict) continue; throw err; }
+      }
+      setSync('ok'); break;
+    }
+    if (syncKind === 'syncing') throw new Error('GitHub kept changing while syncing. Try again.');
+  } catch (err) {
+    const net = err instanceof TypeError; // fetch() rejects with TypeError when the network is unreachable
+    const msg = err.auth ? 'GitHub rejected the token. Check that it has Contents read/write access to this repository and hasn’t expired.'
+      : (net || !navigator.onLine) ? 'Couldn’t reach GitHub. Your changes are safe on this device and will sync when it’s back.'
+      : (err.message || 'Sync failed.');
+    setSync('error', msg);
+    if (opts.manual) toast(msg);
+    if (!err.auth) { clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(), 60000); } // keep trying quietly
+  } finally {
+    syncBusy = false;
+    if (syncAgain) { syncAgain = false; syncNow(); }
+  }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastPull > 300000) syncNow({ quiet: false }); });
+window.addEventListener('online', () => syncNow());
+
 // Ask the browser not to evict our data under storage pressure
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch { /* ignore */ }
 
 render();
+setSync(state.settings.ghToken ? 'idle' : 'idle');
+syncNow(); // pull history from GitHub (read-only works without a token)
 })();
 </script>
 </body>

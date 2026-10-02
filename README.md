@@ -14,7 +14,9 @@ A private, no-account calorie, protein, carb and fat tracker. It is a single `in
 
 ## Your data
 
-Everything is stored in your browser's localStorage on your own device. Nothing is sent to a server, apart from food search and barcode lookups sent to Open Food Facts and USDA FoodData Central. Clearing site data erases it, so use **Settings → Backup** to keep a copy.
+By default everything is stored in your browser's localStorage on your own device. Optional **GitHub sync** (Settings → History sync) also keeps your history in a `tracker-data.json` file on this repository's `data` branch, so it survives clearing the browser and follows you across devices. You add a fine-grained GitHub token (this repo only, Contents read/write) in Settings. It is stored only on that device and is never written to the repo or to backups. Because this repository is public, the synced history is publicly readable.
+
+Apart from optional sync, nothing is sent anywhere except food search and barcode lookups to Open Food Facts and USDA FoodData Central. Clearing site data erases the local copy, so keep sync on or use **Settings → Backup**.
 
 ## Run it
 
