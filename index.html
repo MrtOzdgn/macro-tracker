@@ -15,7 +15,7 @@
   --sage: #6f8f6e; --sage-d: #45634a; --sage-l: #dbe6d4;
   --clay: #c9714d; --clay-l: #f4ddcf; --sun: #d9a441; --sun-l: #f6e8c6; --sky: #6b95a8; --sky-l: #d9e6ec;
   --protein: #c9714d; --carbs: #b4861f; --fat: #4d7f95; --danger: #c4503a; --ok: #6f8f6e; --warn: #d9a441;
-  --hero: #45634a; --on-accent: #ffffff;
+  --hero: #45634a; --hero-lift: #8a4b34; --on-accent: #ffffff;
   --shadow: 0 1px 2px rgba(60,70,40,.05);
   --font: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --serif: "DM Serif Display", Georgia, "Times New Roman", serif;
@@ -27,7 +27,7 @@
     --sage: #8fb08d; --sage-d: #35523a; --sage-l: #243528;
     --clay: #e08a66; --clay-l: #3a2a22; --sun: #e0b14f; --sun-l: #3a3220; --sky: #7fb0c4; --sky-l: #1f3039;
     --protein: #e08a66; --carbs: #e0b14f; --fat: #7fb0c4; --danger: #ef7a62; --ok: #8fb08d; --warn: #e0b14f;
-    --hero: #2f4a34; --shadow: none;
+    --hero: #2f4a34; --hero-lift: #5c3426; --shadow: none;
   }
 }
 
@@ -272,16 +272,87 @@ summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fat);
   .grp, .empty, .meal-actions, .link-btn.left { padding-left: 14px; padding-right: 14px; }
   .mrow { grid-template-columns: 62px 1fr 92px; padding-left: 14px; padding-right: 14px; }
 }
+
+/* Home button / landing */
+button.logo { background: none; border: 0; padding: 0; font-family: inherit; cursor: pointer; }
+.logo svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; margin-right: -2px; }
+.land-h { font: 400 54px/1.05 var(--serif); letter-spacing: -.02em; margin: 20px 4px 2px; }
+.land-sub { color: var(--muted); font-size: 13px; margin: 0 4px 22px; }
+.choice { display: block; width: 100%; text-align: left; border: 0; border-radius: 34px; padding: 24px; margin-bottom: 14px; color: #fff; position: relative; overflow: hidden; min-height: 208px; }
+.choice.meals { background: var(--hero); } .choice.lift { background: var(--hero-lift); }
+.choice::after { content: ""; position: absolute; right: -50px; bottom: -70px; width: 190px; height: 190px; border-radius: 50%; background: rgba(255,255,255,.07); pointer-events: none; }
+.choice:hover { filter: brightness(1.05); }
+.choice small { display: block; font: 600 11px var(--font); letter-spacing: .16em; text-transform: uppercase; opacity: .8; }
+.choice .arrow { position: absolute; right: 20px; top: 18px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.18); display: grid; place-items: center; font-size: 22px; line-height: 1; }
+.choice .n { font: 400 76px/.95 var(--serif); letter-spacing: -.03em; margin: 12px 0 4px; white-space: nowrap; }
+.choice .n i { font: italic 400 28px var(--serif); letter-spacing: 0; opacity: .85; margin-left: 6px; }
+.choice .cs { font-weight: 600; font-size: 14px; opacity: .92; }
+.choice .cm { font: 500 12px var(--mono); opacity: .8; margin-top: 4px; }
+.choice .hbar { position: relative; z-index: 1; }
+
+/* Lifting */
+.hero.lift { background: var(--hero-lift); }
+.ex { border-top: 1px solid var(--line); padding: 14px 18px 12px; }
+.ex-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.ex-name { font-weight: 700; font-size: 15px; }
+.tag { font: 600 10px var(--font); letter-spacing: .1em; text-transform: uppercase; background: var(--sage-l); color: var(--sage-d); border-radius: 99px; padding: 2px 8px; margin-left: 6px; vertical-align: 1px; }
+@media (prefers-color-scheme: dark) { .tag { color: var(--sage); } }
+.prb { font: 700 10px var(--mono); background: var(--sun); color: #3a2c08; border-radius: 99px; padding: 2px 8px; margin-left: 6px; vertical-align: 1px; }
+.ex-last { font: 400 12px var(--mono); color: var(--muted); margin: 4px 0 10px; }
+.setrow { display: grid; grid-template-columns: 24px 1fr 12px 1fr 30px; gap: 8px; align-items: center; margin-bottom: 6px; }
+.setrow .sn { font: 600 12px var(--mono); color: var(--muted); text-align: center; }
+.setrow .x { color: var(--muted); text-align: center; font-size: 13px; }
+.setrow input { padding: 10px 8px; text-align: center; font: 500 15px var(--mono); }
+.setrow .rm { border: 0; background: none; color: var(--danger); font-size: 18px; line-height: 1; padding: 2px; }
+.ex-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+.sug { font: 500 12px var(--mono); color: var(--sage-d); background: var(--sage-l); border-radius: 99px; padding: 5px 11px; }
+@media (prefers-color-scheme: dark) { .sug { color: var(--sage); } }
+.e1 { font: 500 12px var(--mono); color: var(--muted); }
+.empty-state { padding: 6px 18px 14px; color: var(--muted); font-size: 14px; }
+.exsel { padding: 0 18px 8px; } .exsel select { width: 100%; padding: 11px 14px; border-radius: 14px; border: 1px solid transparent; background: var(--surface-2); }
+.pstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 6px 18px 4px; }
+.pstats div { background: var(--surface-2); border-radius: 16px; padding: 10px 12px; min-width: 0; }
+.pstats small { display: block; font: 600 10px var(--font); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.pstats b { display: block; font: 500 17px var(--mono); margin-top: 3px; white-space: nowrap; }
+.status { display: inline-block; font: 700 11px var(--mono); border-radius: 99px; padding: 4px 11px; margin: 10px 18px 4px; }
+.status.up { background: var(--sage-l); color: var(--sage-d); } .status.flat { background: var(--sun-l); color: #7a5a12; } .status.down { background: var(--clay-l); color: var(--clay); } .status.new { background: var(--surface-2); color: var(--muted); }
+@media (prefers-color-scheme: dark) { .status.up { color: var(--sage); } .status.flat { color: var(--sun); } }
+.plist { padding: 0 0 6px; }
+.plist .pr, .plist .ph2 { display: grid; grid-template-columns: 58px minmax(0, 1fr) 60px 62px; gap: 6px; padding: 8px 18px; font: 500 12.5px var(--mono); border-top: 1px solid var(--line); align-items: center; }
+.plist .ph2 { font: 600 10px var(--font); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-top: 0; }
+.plist .pr span:nth-child(n+3), .plist .ph2 span:nth-child(n+3) { text-align: right; }
+.plist .up { color: var(--sage-d); } .plist .down { color: var(--clay); }
+@media (prefers-color-scheme: dark) { .plist .up { color: var(--sage); } }
+.prfeed { list-style: none; margin: 0; padding: 4px 18px 16px; display: grid; gap: 10px; font-size: 14px; }
+.prfeed li { display: flex; gap: 10px; align-items: baseline; }
+.prfeed li b { font: 700 11px var(--mono); background: var(--sun); color: #3a2c08; border-radius: 9px; padding: 2px 8px; white-space: nowrap; }
+.prfeed li small { color: var(--muted); font: 400 12px var(--mono); margin-left: auto; white-space: nowrap; }
+.mrow.lg { --c: var(--clay); }
+.cell.sess { background: var(--clay); color: #fff; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="landing" hidden>
   <header class="top">
-    <div class="logo"><i></i>Macro Tracker</div>
+    <div class="logo" style="cursor:default"><i></i>Macro Tracker</div>
     <div class="top-r">
-      <span class="sync" id="syncState" hidden></span>
-      <button class="icon-btn" id="openSettings" aria-label="Settings and goals" title="Settings">
+      <span class="sync" hidden></span>
+      <button class="icon-btn js-settings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+  </header>
+  <h1 class="land-h" id="landHello"></h1>
+  <p class="land-sub" id="landDate"></p>
+  <button class="choice meals" id="choiceMeals" data-go="meals" type="button" aria-label="Open Meals"></button>
+  <button class="choice lift" id="choiceLift" data-go="lifting" type="button" aria-label="Open Lifting"></button>
+</div>
+
+<div class="wrap" id="mealsView" hidden>
+  <header class="top">
+    <button class="logo" data-go="landing" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><i></i>Meals</button>
+    <div class="top-r">
+      <span class="sync" hidden></span>
+      <button class="icon-btn js-settings" id="openSettings" aria-label="Settings and goals" title="Settings">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </div>
@@ -369,7 +440,70 @@ summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fat);
   </section>
 </div>
 
-<button class="fab" id="addBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add food</button>
+<div class="wrap" id="liftView" hidden>
+  <header class="top">
+    <button class="logo" data-go="landing" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><i style="background:var(--clay)"></i>Lifting</button>
+    <div class="top-r">
+      <span class="sync" hidden></span>
+      <button class="icon-btn js-settings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+  </header>
+
+  <div class="datebar">
+    <div class="label"><span id="liftTitle"></span><small id="liftSub"></small></div>
+    <button class="today-btn" id="liftToday" hidden>Today</button>
+    <button class="icon-btn" id="liftPrev" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button class="icon-btn" id="liftNext" aria-label="Next day"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+
+  <section class="hero lift" aria-label="Workout summary">
+    <small id="lLabel"></small>
+    <div class="n" id="lValue"></div>
+    <div class="hrow">
+      <span class="pill m" id="lPill"></span>
+      <button class="pill a" id="lStart" type="button">+ Add exercise</button>
+    </div>
+    <div class="hbar" id="lBar" aria-hidden="true"></div>
+  </section>
+
+  <section class="kpis" id="liftKpis" aria-label="Key figures"></section>
+
+  <section class="panel" aria-label="Workout">
+    <div class="ph"><h2>Workout</h2><span id="liftCount"></span></div>
+    <div id="liftDay"></div>
+    <div class="panel-foot"><button type="button" class="link-btn" id="liftRepeat" hidden></button></div>
+  </section>
+
+  <section class="panel" aria-label="Progressive overload">
+    <div class="ph"><h2>Progressive overload</h2><span id="pMetricLbl"></span></div>
+    <div id="liftProgress"></div>
+  </section>
+
+  <section class="panel" aria-label="Weekly volume">
+    <div class="ph"><h2>Weekly volume</h2><span id="wvNote"></span></div>
+    <div class="pb"><svg class="chart" id="liftWeekly" viewBox="0 0 320 140" role="img" aria-label="Training volume for the last eight weeks"></svg></div>
+  </section>
+
+  <section class="panel" aria-label="Muscle groups">
+    <div class="ph"><h2>Muscle groups</h2><span>sets · last 28 days</span></div>
+    <div id="liftGroups"></div>
+  </section>
+
+  <section class="panel" aria-label="Personal records">
+    <div class="ph"><h2>Personal records</h2><span>latest</span></div>
+    <ul class="prfeed" id="liftPRs"></ul>
+  </section>
+
+  <section class="panel" aria-label="Training consistency">
+    <div class="ph"><h2>Consistency</h2><span>last 5 weeks</span></div>
+    <div class="heat" id="liftHeat"></div>
+    <div class="legend"><span><i style="background:var(--clay)"></i>Trained</span><span><i style="background:var(--surface-2)"></i>Rest</span></div>
+    <p class="chart-note" style="padding-top:8px">Tap a day to open that workout.</p>
+  </section>
+</div>
+
+<button class="fab" id="addBtn" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add food</button>
+<button class="fab" id="liftFab" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add exercise</button>
 
 <!-- Add / edit dialog -->
 <dialog id="entryDlg">
@@ -461,6 +595,22 @@ summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fat);
   </form>
 </dialog>
 
+<!-- Exercise picker dialog -->
+<dialog id="exDlg">
+  <form class="dlg" id="exForm" method="dialog">
+    <h2>Add exercise</h2>
+    <div class="field"><label for="exSearch">Search or create</label><input id="exSearch" type="text" maxlength="60" autocomplete="off" placeholder="e.g. Bench Press"></div>
+    <div id="exList" class="results" style="max-height:260px"></div>
+    <div id="exNew" hidden>
+      <div class="field"><label for="exGroup">Muscle group for the new exercise</label><select id="exGroup"></select></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="exCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="exCreate" hidden>Create &amp; add</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- Settings dialog -->
 <dialog id="setDlg">
   <form class="dlg" id="setForm" method="dialog">
@@ -521,6 +671,10 @@ summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fat);
     <button type="button" class="btn small" id="newMealBtn">New meal…</button>
 
     <hr class="divider">
+    <h3>My exercises</h3>
+    <div class="food-list" id="exLibList"></div>
+
+    <hr class="divider">
     <h3>Preferences</h3>
     <div class="field"><label for="sUnit">Weight units</label><select id="sUnit"><option value="kg">Kilograms (kg)</option><option value="lb">Pounds (lb)</option></select></div>
     <div class="field"><label for="sKey">USDA FoodData Central key (optional)</label><input id="sKey" type="text" autocomplete="off" spellcheck="false" placeholder="Paste a free key for more searches"></div>
@@ -541,7 +695,8 @@ summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--fat);
       <button type="button" class="btn primary small" id="backupNowBtn">Back up now</button>
       <button type="button" class="btn small" id="exportBtn">Export JSON</button>
       <button type="button" class="btn small" id="importBtn">Import JSON</button>
-      <button type="button" class="btn small" id="csvBtn">Export CSV</button>
+      <button type="button" class="btn small" id="csvBtn">Export meals CSV</button>
+      <button type="button" class="btn small" id="liftCsvBtn">Export lifts CSV</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
     <p class="calc-note" style="margin-top:10px">On a phone, "Back up now" opens the share sheet so you can save the file to iCloud Drive, Google Drive or Files. Elsewhere it downloads the file.</p>
@@ -611,9 +766,43 @@ const weekdayName = (k, style = 'long') => parseKey(k).toLocaleDateString(undefi
 
 /* ================= State & migration ================= */
 const defaultGoals = () => ({ kcal: 2000, p: 150, c: 200, f: 65 });
+const GROUPS = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Other'];
+const STARTER_EX = [
+  ['ex-back-squat', 'Back Squat', 'Legs'], ['ex-bench-press', 'Bench Press', 'Chest'], ['ex-deadlift', 'Deadlift', 'Back'],
+  ['ex-overhead-press', 'Overhead Press', 'Shoulders'], ['ex-barbell-row', 'Barbell Row', 'Back'], ['ex-pull-up', 'Pull-up', 'Back'],
+  ['ex-romanian-deadlift', 'Romanian Deadlift', 'Legs'], ['ex-incline-db-press', 'Incline Dumbbell Press', 'Chest'],
+  ['ex-lat-pulldown', 'Lat Pulldown', 'Back'], ['ex-leg-press', 'Leg Press', 'Legs'], ['ex-biceps-curl', 'Biceps Curl', 'Arms'],
+  ['ex-triceps-pushdown', 'Triceps Pushdown', 'Arms'], ['ex-lateral-raise', 'Lateral Raise', 'Shoulders'], ['ex-plank', 'Plank', 'Core'],
+];
+const defaultLifts = () => ({ exercises: STARTER_EX.map(([id, name, group]) => ({ id, name, group })), log: {} });
+// Weights are stored in kg; sets are { w: kg, r: reps }
+function cleanLifts(raw) {
+  const d = defaultLifts();
+  if (!raw || typeof raw !== 'object') return d;
+  const exercises = Array.isArray(raw.exercises)
+    ? raw.exercises.filter(e => e && typeof e.name === 'string' && e.name.trim()).map(e => ({ id: String(e.id || uid()), name: e.name.trim().slice(0, 60), group: GROUPS.includes(e.group) ? e.group : 'Other' }))
+    : d.exercises;
+  const log = {};
+  if (raw.log && typeof raw.log === 'object') {
+    for (const [k, list] of Object.entries(raw.log)) {
+      if (!DATE_RE.test(k) || !Array.isArray(list)) continue;
+      const clean = list.filter(e => e && typeof e === 'object' && e.exId != null).map(e => ({
+        id: String(e.id || uid()), exId: String(e.exId), name: String(e.name || 'Exercise').slice(0, 60), group: GROUPS.includes(e.group) ? e.group : 'Other',
+        sets: (Array.isArray(e.sets) ? e.sets : []).slice(0, 40).map(st => ({
+          w: Math.round(Math.min(Math.max(parseFloat(st && st.w) || 0, 0), 1000) * 1000) / 1000,
+          r: Math.min(Math.max(Math.round(parseFloat(st && st.r) || 0), 0), 500),
+        })),
+      }));
+      if (clean.length) log[k] = clean;
+    }
+  }
+  return { exercises, log };
+}
+
 function defaults() {
   return {
     v: 2,
+    lifts: defaultLifts(),
     goalHistory: [{ from: '0000-01-01', rest: defaultGoals(), training: null }],
     dayTypes: {},
     foods: STARTER_FOODS.map(f => ({ id: uid(), ...cleanNutr(f), name: f.name })),
@@ -704,9 +893,10 @@ function sanitize(raw, fromRemote = false) {
     backupSnooze: Number.isFinite(s.backupSnooze) ? s.backupSnooze : null,
   };
   // savedAt marks the last local change. Pre-sync data that has history counts as an unsynced local change.
-  const hasData = Object.keys(log).length > 0 || Object.keys(weights).length > 0;
+  const lifts = cleanLifts(raw.lifts);
+  const hasData = Object.keys(log).length > 0 || Object.keys(weights).length > 0 || Object.keys(lifts.log).length > 0;
   const savedAt = Number.isFinite(raw.savedAt) && raw.savedAt > 0 ? raw.savedAt : (hasData && !fromRemote ? Date.now() : 0);
-  return { v: 2, savedAt, goalHistory: history, dayTypes, foods, log, weights, settings };
+  return { v: 2, savedAt, goalHistory: history, dayTypes, foods, log, weights, lifts, settings };
 }
 let memoryOnly = false;
 function load() {
@@ -807,6 +997,11 @@ function streak(pred) {
 
 /* ================= Rendering ================= */
 function render() {
+  if (currentView === 'landing') renderLanding();
+  else if (currentView === 'lifting') renderLift();
+  else renderMealsView();
+}
+function renderMealsView() {
   renderDate(); renderBanner(); renderSummary(); renderMeals();
   renderChart(); renderWeight(); renderInsights(); renderHeat();
 }
@@ -1617,7 +1812,7 @@ function openSettings(focusId) {
   const wk = Object.keys(state.weights).sort();
   $('#cWeight').value = wk.length ? r1(toDisp(state.weights[wk[wk.length - 1]])) : '';
   $('#calcOut').textContent = ''; $('#useCalc').hidden = true; calcResult = null;
-  updateGoalKcal(); renderFoodList(); updateBackupInfo();
+  updateGoalKcal(); renderFoodList(); renderExLibList(); updateBackupInfo();
   $('#persistInfo').textContent = '';
   if (navigator.storage && navigator.storage.persisted) {
     navigator.storage.persisted().then(p => { $('#persistInfo').textContent = p ? 'Browser storage is marked as protected.' : 'Your browser may clear this data if the device runs low on space, so keep a backup.'; }).catch(() => {});
@@ -1625,7 +1820,7 @@ function openSettings(focusId) {
   setDlg.showModal();
   if (typeof focusId === 'string') { $(focusId).focus(); $(focusId).select(); }
 }
-$('#openSettings').addEventListener('click', () => openSettings());
+document.querySelectorAll('.js-settings').forEach(b => b.addEventListener('click', () => openSettings()));
 $('#editGoals').addEventListener('click', () => openSettings('#gK'));
 ['#gK', '#gP', '#gC', '#gF'].forEach(s => $(s).addEventListener('input', updateGoalKcal));
 $('#fitKcal').addEventListener('click', () => { $('#gK').value = Math.round(kcalOf(goalFields())); updateGoalKcal(); });
@@ -1804,17 +1999,19 @@ $('#metricSeg').addEventListener('click', ev => {
   const b = ev.target.closest('button[data-m]'); if (!b) return;
   metric = b.dataset.m; renderChart();
 });
-for (const d of [entryDlg, setDlg, mealDlg, scanDlg]) d.addEventListener('click', ev => { if (ev.target === d) d.close(); });
+for (const d of [entryDlg, setDlg, mealDlg, scanDlg, $('#exDlg')]) d.addEventListener('click', ev => { if (ev.target === d) d.close(); });
 document.addEventListener('keydown', ev => {
   if (ev.target.closest('input, select, textarea, dialog') || document.querySelector('dialog[open]') || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-  if (ev.key === 'ArrowLeft') $('#prevDay').click();
-  if (ev.key === 'ArrowRight') $('#nextDay').click();
+  const dir = ev.key === 'ArrowLeft' ? 'Prev' : ev.key === 'ArrowRight' ? 'Next' : null;
+  if (!dir) return;
+  if (currentView === 'meals') $(dir === 'Prev' ? '#prevDay' : '#nextDay').click();
+  else if (currentView === 'lifting') $('#lift' + dir).click();
 });
 // Roll over to the new day if the tab stays open past midnight
 let lastToday = todayKey();
 setInterval(() => {
   const t = todayKey();
-  if (t !== lastToday) { if (viewKey === lastToday) viewKey = t; lastToday = t; render(); }
+  if (t !== lastToday) { if (viewKey === lastToday) viewKey = t; if (liftKey === lastToday) liftKey = t; lastToday = t; render(); }
 }, 60000);
 
 /* ---------- Toast (a popover, so it shows above open dialogs) ---------- */
@@ -1863,9 +2060,10 @@ function setSync(kind, detail = '') {
   syncKind = kind; syncDetail = detail;
   const hasToken = !!state.settings.ghToken;
   const head = { syncing: 'Syncing…', ok: hasToken ? 'Synced' : '', dirty: 'Not saved to GitHub', error: 'Sync paused', idle: '' }[kind] || '';
-  const pill = $('#syncState');
-  pill.textContent = head; pill.hidden = !head;
-  pill.className = 'sync' + (kind === 'dirty' || kind === 'error' ? ' warn' : '');
+  document.querySelectorAll('.sync').forEach(pill => {
+    pill.textContent = head; pill.hidden = !head;
+    pill.className = 'sync' + (kind === 'dirty' || kind === 'error' ? ' warn' : '');
+  });
   const info = { syncing: 'Syncing…', ok: hasToken ? 'Up to date.' : remoteMissing ? 'Nothing is saved to GitHub yet. Add a token to start keeping your history there.' : 'Loaded from GitHub. Add a token to save changes there.', dirty: 'Changes are saved on this device only. Add a GitHub token to keep them in the repo.', error: '', idle: '' }[kind];
   $('#syncInfo').textContent = (detail || info || '');
 }
@@ -1875,11 +2073,21 @@ function mergeStates(a, b) { // a = local, b = remote; keeps everything from bot
     const ids = new Set((a.log[k] || []).map(e => e.id));
     log[k] = [...(a.log[k] || []), ...(b.log[k] || []).filter(e => !ids.has(e.id))];
   }
+  // Lifting: union workouts by id; exercises by name (remapping remote ids that match a local exercise by name)
+  const idMap = new Map();
+  for (const e of b.lifts.exercises) { const m = a.lifts.exercises.find(x => keyOfName(x.name) === keyOfName(e.name)); if (m) idMap.set(e.id, m.id); }
+  const liftLog = {};
+  for (const k of new Set([...Object.keys(a.lifts.log), ...Object.keys(b.lifts.log)])) {
+    const ids = new Set((a.lifts.log[k] || []).map(e => e.id));
+    liftLog[k] = [...(a.lifts.log[k] || []), ...(b.lifts.log[k] || []).filter(e => !ids.has(e.id)).map(e => ({ ...e, exId: idMap.get(e.exId) || e.exId }))];
+  }
+  const exNames = new Set(a.lifts.exercises.map(e => keyOfName(e.name)));
+  const lifts = { exercises: [...a.lifts.exercises, ...b.lifts.exercises.filter(e => !exNames.has(keyOfName(e.name)))], log: liftLog };
   const names = new Set(a.foods.map(f => keyOfName(f.name)));
   const hist = new Map();
   for (const x of [...b.goalHistory, ...a.goalHistory]) hist.set(x.from, x);
   return sanitize({
-    v: 2, savedAt: Date.now(), log,
+    v: 2, savedAt: Date.now(), log, lifts,
     weights: { ...b.weights, ...a.weights }, dayTypes: { ...b.dayTypes, ...a.dayTypes },
     foods: [...a.foods, ...b.foods.filter(f => !names.has(keyOfName(f.name)))],
     goalHistory: [...hist.values()], settings: a.settings,
@@ -1962,11 +2170,513 @@ async function syncNow(opts = {}) {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastPull > 300000) syncNow({ quiet: false }); });
 window.addEventListener('online', () => syncNow());
 
+/* ================= Views ================= */
+const VIEWS = ['landing', 'meals', 'lifting'];
+let currentView = 'landing';
+function go(view, push = true) {
+  if (!VIEWS.includes(view)) view = 'landing';
+  currentView = view;
+  $('#landing').hidden = view !== 'landing'; $('#mealsView').hidden = view !== 'meals'; $('#liftView').hidden = view !== 'lifting';
+  $('#addBtn').hidden = view !== 'meals'; $('#liftFab').hidden = view !== 'lifting';
+  if (push && location.hash !== '#/' + view) { try { location.hash = '#/' + view; } catch { /* ignore */ } }
+  window.scrollTo(0, 0);
+  render();
+}
+window.addEventListener('hashchange', () => {
+  const v = location.hash.replace(/^#\/?/, '');
+  if (v !== currentView) go(VIEWS.includes(v) ? v : 'landing', false);
+});
+document.addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if (b) go(b.dataset.go); });
+
+/* ================= Lifting ================= */
+let liftKey = todayKey(), liftEx = '', liftMetric = 'e1rm';
+const stepKg = () => (state.settings.unit === 'lb' ? 5 / LB : 2.5);
+const wFmt = kg => fmt(toDisp(kg));
+const roundW = v => Math.round(v * 1000) / 1000;
+const shortDate = k => parseKey(k).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+// Epley estimate of a one-rep max; unreliable past ~15 reps, so those sets are ignored for it
+const e1rmOf = (w, r) => (w > 0 && r >= 1 && r <= 15 ? (r === 1 ? w : w * (1 + r / 30)) : 0);
+const liftDay = key => state.lifts.log[key] || [];
+
+function setStats(sets) {
+  const st = { n: 0, e1rm: 0, topSet: null, topW: 0, vol: 0, reps: 0, maxReps: 0, bw: true };
+  for (const s of sets) {
+    if (!(s.r > 0)) continue;
+    st.n++; st.vol += s.w * s.r; st.reps += s.r; st.maxReps = Math.max(st.maxReps, s.r);
+    if (s.w > 0) st.bw = false;
+    st.e1rm = Math.max(st.e1rm, e1rmOf(s.w, s.r));
+    if (!st.topSet || s.w > st.topSet.w || (s.w === st.topSet.w && s.r > st.topSet.r)) st.topSet = s;
+  }
+  st.topW = st.topSet ? st.topSet.w : 0;
+  return st;
+}
+const scoreOf = st => (st.bw ? st.maxReps : st.e1rm); // progress metric: e1RM, or best reps for bodyweight work
+
+function liftHistory(exId) {
+  const out = [];
+  for (const k of Object.keys(state.lifts.log).sort()) {
+    for (const e of state.lifts.log[k]) {
+      if (e.exId !== exId) continue;
+      const st = setStats(e.sets);
+      if (st.n) out.push({ k, e, st });
+    }
+  }
+  return out;
+}
+// A session is a PR when it beats every earlier session of that lift (the first session is the baseline)
+function prFlags(hist) { let best = 0; return hist.map((it, i) => { const sc = scoreOf(it.st); const pr = i > 0 && sc > best + 1e-9; if (sc > best) best = sc; return pr; }); }
+function lastBefore(exId, key) { const h2 = liftHistory(exId).filter(x => x.k < key); return h2.length ? h2[h2.length - 1] : null; }
+const setLine = sets => sets.filter(s => s.r > 0).map(s => (s.w > 0 ? `${wFmt(s.w)} × ${s.r}` : `${s.r}`)).join(' · ');
+// Double progression: add a rep until you reach 10, then add weight and drop back to 8
+function suggestNext(st) {
+  if (!st || !st.topSet) return null;
+  const top = st.topSet;
+  if (st.bw) return { text: `${top.r + 1} reps` };
+  if (top.r >= 10) return { text: `${wFmt(top.w + stepKg())} ${unitLabel()} × 8` };
+  return { text: `${wFmt(top.w)} ${unitLabel()} × ${top.r + 1}` };
+}
+const dayStats = key => liftDay(key).map(e => setStats(e.sets));
+const dayHasSession = key => dayStats(key).some(st => st.n > 0);
+const dayVolume = key => dayStats(key).reduce((s, st) => s + st.vol, 0);
+const weekStart = key => addDays(key, -((parseKey(key).getDay() + 6) % 7));
+const volText = kg => Math.round(toDisp(kg)).toLocaleString();
+function exercisesWithHistory() {
+  const map = new Map();
+  for (const [k, list] of Object.entries(state.lifts.log)) {
+    for (const e of list) {
+      if (!setStats(e.sets).n) continue;
+      const cur = map.get(e.exId);
+      if (!cur || k > cur.last) map.set(e.exId, { id: e.exId, name: e.name, group: e.group, last: k });
+    }
+  }
+  return [...map.values()].sort((a, b) => (a.last < b.last ? 1 : a.last > b.last ? -1 : a.name.localeCompare(b.name)));
+}
+function allPRs() {
+  const out = [];
+  for (const ex of exercisesWithHistory()) {
+    const hist = liftHistory(ex.id), fl = prFlags(hist);
+    hist.forEach((it, i) => { if (fl[i]) out.push({ k: it.k, name: ex.name, st: it.st }); });
+  }
+  return out.sort((a, b) => (a.k < b.k ? 1 : a.k > b.k ? -1 : 0));
+}
+const agoText = k => { const n = daysBetween(k, todayKey()); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; };
+
+/* ---------- Landing ---------- */
+function renderLanding() {
+  const hr = new Date().getHours();
+  $('#landHello').textContent = hr < 5 ? 'Late night' : hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+  $('#landDate').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  const today = todayKey(), t = dayTotals(today), g = goalsFor(today), left = g.p - t.p;
+  const segs = (on, total) => Array.from({ length: total }, (_, i) => `<i${i < on ? ' class="on"' : ''}></i>`).join('');
+  const pOn = g.p > 0 ? Math.min(10, Math.round(Math.min(t.p / g.p, 1) * 10)) : 0;
+  $('#choiceMeals').innerHTML = `<span class="arrow">›</span><small>Meals</small>
+    <div class="n">${left > 0 ? `${fmt(left)}<i>g</i>` : '✓'}</div>
+    <div class="cs">${left > 0 ? 'protein left today' : 'protein goal reached'}</div>
+    <div class="cm">${Math.round(t.kcal).toLocaleString()} / ${Math.round(g.kcal).toLocaleString()} kcal</div>
+    <div class="hbar" style="margin-top:14px">${segs(pOn, 10)}</div>`;
+  const days7 = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+  const sess = days7.filter(dayHasSession).length, vol = days7.reduce((s, k) => s + dayVolume(k), 0);
+  const card = $('#choiceLift');
+  card.innerHTML = `<span class="arrow">›</span><small>Lifting</small>
+    <div class="n">${sess}<i>${sess === 1 ? 'session' : 'sessions'}</i></div>
+    <div class="cs">in the last 7 days</div>
+    <div class="cm"><span class="lv"></span></div>
+    <div class="hbar" style="margin-top:14px">${days7.map(k => `<i${dayHasSession(k) ? ' class="on"' : ''}></i>`).join('')}</div>`;
+  const lastDay = Object.keys(state.lifts.log).filter(dayHasSession).sort().pop();
+  card.querySelector('.lv').textContent = lastDay
+    ? `${volText(vol)} ${unitLabel()} this week · last ${agoText(lastDay)}`
+    : 'Start your first workout';
+}
+
+/* ---------- Lifting view ---------- */
+function renderLift() {
+  const t = todayKey();
+  $('#liftTitle').textContent = liftKey === t ? 'Today' : liftKey === addDays(t, -1) ? 'Yesterday' : liftKey === addDays(t, 1) ? 'Tomorrow' : weekdayName(liftKey);
+  $('#liftSub').textContent = parseKey(liftKey).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+  $('#liftToday').hidden = liftKey === t;
+  renderLiftWorkout();
+  renderLiftStats();
+}
+
+function numInput(value, attrs) {
+  const i = h('input'); i.type = 'number'; i.inputMode = attrs.mode; i.step = attrs.step; i.min = '0'; i.placeholder = attrs.ph; i.value = value;
+  i.setAttribute('aria-label', attrs.label);
+  return i;
+}
+function exerciseCard(entry, key) {
+  const card = h('div', 'ex');
+  const head = h('div', 'ex-h'), title = h('div');
+  const pr = h('span', 'prb', 'PR'); pr.hidden = true;
+  title.append(h('span', 'ex-name', entry.name), h('span', 'tag', entry.group), pr);
+  const rm = h('button', 'link-btn', 'Remove'); rm.type = 'button'; rm.style.cssText = 'margin:0;padding:2px 0';
+  rm.addEventListener('click', () => removeExercise(entry, key));
+  head.append(title, rm);
+  const last = h('div', 'ex-last');
+  const setsBox = h('div', 'sets');
+  const foot = h('div', 'ex-foot');
+  const addSet = h('button', 'btn small', '+ Set'); addSet.type = 'button';
+  const sug = h('span', 'sug'), e1 = h('span', 'e1');
+  foot.append(addSet, sug, e1);
+
+  function meta() { // refresh the read-only lines without touching the inputs
+    const hist = liftHistory(entry.exId), idx = hist.findIndex(x => x.e === entry);
+    pr.hidden = !(idx >= 0 && prFlags(hist)[idx]);
+    const prev = lastBefore(entry.exId, key);
+    last.textContent = prev ? `Last ${shortDate(prev.k)}: ${setLine(prev.e.sets)}` : 'First time logging this lift';
+    const sg = prev ? suggestNext(prev.st) : null;
+    sug.hidden = !sg; if (sg) sug.textContent = `Try ${sg.text}`;
+    const st = setStats(entry.sets);
+    e1.textContent = st.n ? (st.bw ? `best ${st.maxReps} reps` : `e1RM ${wFmt(st.e1rm)} ${unitLabel()}`) : '';
+  }
+  const commit = () => { save(); meta(); renderLiftStats(); };
+  function renderSets() {
+    setsBox.replaceChildren(...entry.sets.map((s, i) => {
+      const row = h('div', 'setrow');
+      const wi = numInput(s.w > 0 ? r1(toDisp(s.w)) : '', { mode: 'decimal', step: 'any', ph: unitLabel(), label: `Set ${i + 1} weight in ${unitLabel()}` });
+      const ri = numInput(s.r > 0 ? s.r : '', { mode: 'numeric', step: '1', ph: 'reps', label: `Set ${i + 1} reps` });
+      wi.addEventListener('change', () => {
+        const raw = wi.value.trim();
+        if (raw === '') s.w = 0;
+        else {
+          const v = parseFloat(raw);
+          if (!(Number.isFinite(v) && v >= 0 && fromDisp(v) <= 1000)) { wi.value = s.w > 0 ? r1(toDisp(s.w)) : ''; return; }
+          s.w = roundW(fromDisp(v));
+        }
+        commit();
+      });
+      ri.addEventListener('change', () => {
+        const raw = ri.value.trim();
+        const v = raw === '' ? 0 : Math.round(parseFloat(raw));
+        if (!(Number.isFinite(v) && v >= 0 && v <= 500)) { ri.value = s.r > 0 ? s.r : ''; return; }
+        s.r = v; commit();
+      });
+      const del = h('button', 'rm', '×'); del.type = 'button'; del.setAttribute('aria-label', `Remove set ${i + 1}`);
+      del.addEventListener('click', () => { entry.sets.splice(i, 1); save(); renderSets(); meta(); renderLiftStats(); });
+      row.append(h('span', 'sn', String(i + 1)), wi, h('span', 'x', '×'), ri, del);
+      return row;
+    }));
+  }
+  addSet.addEventListener('click', () => {
+    const prevSet = entry.sets[entry.sets.length - 1];
+    entry.sets.push({ w: prevSet ? prevSet.w : 0, r: prevSet ? prevSet.r : 0 });
+    save(); renderSets(); meta(); renderLiftStats();
+    const rows = setsBox.querySelectorAll('.setrow'); const inp = rows[rows.length - 1].querySelectorAll('input')[1]; inp.focus(); inp.select();
+  });
+  card.append(head, last, setsBox, foot);
+  renderSets(); meta();
+  return card;
+}
+function renderLiftWorkout() {
+  const entries = liftDay(liftKey), key = liftKey;
+  const host = $('#liftDay');
+  $('#liftCount').textContent = entries.length ? `${entries.length} ${entries.length === 1 ? 'exercise' : 'exercises'}` : '';
+  if (!entries.length) host.replaceChildren(h('div', 'empty-state', 'No exercises yet. Add one to start this workout.'));
+  else host.replaceChildren(...entries.map(e => exerciseCard(e, key)));
+  const prevDay = Object.keys(state.lifts.log).filter(k => k < key && dayHasSession(k)).sort().pop();
+  const rb = $('#liftRepeat');
+  rb.hidden = !(prevDay && !entries.length);
+  if (!rb.hidden) { rb.textContent = `Repeat ${weekdayName(prevDay)}’s workout`; rb.onclick = () => repeatWorkout(prevDay); }
+}
+function addExerciseToDay(ex) {
+  const key = liftKey, list = (state.lifts.log[key] ||= []);
+  if (list.some(e => e.exId === ex.id)) { toast(`${ex.name} is already in this workout`); return; }
+  const prev = lastBefore(ex.id, key);
+  const sets = prev ? prev.e.sets.filter(s => s.r > 0).map(s => ({ w: s.w, r: s.r })) : [];
+  list.push({ id: uid(), exId: ex.id, name: ex.name, group: ex.group, sets: sets.length ? sets : [{ w: 0, r: 0 }] });
+  save(); renderLift();
+  toast(prev ? 'Added with your last sets to build on' : 'Added');
+}
+function repeatWorkout(fromKey) {
+  const key = liftKey;
+  const copies = liftDay(fromKey).filter(e => setStats(e.sets).n).map(e => ({ ...e, id: uid(), sets: e.sets.filter(s => s.r > 0).map(s => ({ w: s.w, r: s.r })) }));
+  if (!copies.length) return;
+  (state.lifts.log[key] ||= []).push(...copies);
+  save(); renderLift();
+  const ids = new Set(copies.map(c => c.id));
+  toast(`Copied ${copies.length} ${copies.length === 1 ? 'exercise' : 'exercises'}`, { undo: () => {
+    state.lifts.log[key] = (state.lifts.log[key] || []).filter(e => !ids.has(e.id));
+    if (!state.lifts.log[key].length) delete state.lifts.log[key];
+    save(); renderLift();
+  } });
+}
+function removeExercise(entry, key) {
+  const list = state.lifts.log[key], i = list ? list.indexOf(entry) : -1;
+  if (i < 0) return;
+  list.splice(i, 1);
+  if (!list.length) delete state.lifts.log[key];
+  save(); renderLift();
+  toast(`${entry.name} removed`, { undo: () => {
+    const arr = (state.lifts.log[key] ||= []);
+    arr.splice(Math.min(i, arr.length), 0, entry);
+    save(); renderLift();
+  } });
+}
+
+/* ---------- Lifting stats ---------- */
+function lineSvg(pts, fmtY) {
+  const W = 320, H = 150, padL = 34, padR = 8, top = 12, bottom = 20;
+  const vals = pts.map(p => p.v);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = Math.max((hi - lo) * 0.18, hi * 0.03, 0.5);
+  lo = Math.max(0, lo - pad); hi += pad;
+  const t0 = parseKey(pts[0].k).getTime(), span = (parseKey(pts[pts.length - 1].k).getTime() - t0) || 1;
+  const x = k => (pts.length === 1 ? padL + (W - padL - padR) / 2 : padL + ((parseKey(k).getTime() - t0) / span) * (W - padL - padR));
+  const y = v => top + (1 - (v - lo) / (hi - lo)) * (H - top - bottom);
+  let out = `<text x="2" y="${top + 8}">${fmtY(hi)}</text><text x="2" y="${H - bottom}">${fmtY(lo)}</text>`;
+  out += `<text x="${padL}" y="${H - 5}">${shortDate(pts[0].k)}</text>`;
+  if (pts.length > 1) {
+    out += `<text x="${W - padR}" y="${H - 5}" text-anchor="end">${shortDate(pts[pts.length - 1].k)}</text>`;
+    out += `<path class="trend" d="${pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.k).toFixed(1)} ${y(p.v).toFixed(1)}`).join('')}"/>`;
+  }
+  out += pts.map(p => `<circle cx="${x(p.k).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="${p.pr ? 4.8 : 3.2}" fill="${p.pr ? 'var(--sun)' : 'var(--clay)'}" stroke="var(--surface)" stroke-width="1.5"><title>${shortDate(p.k)}: ${fmtY(p.v)}${p.pr ? ' · PR' : ''}</title></circle>`).join('');
+  return out;
+}
+
+function renderLiftStats() {
+  const key = liftKey, today = todayKey();
+  const entries = liftDay(key), stats = entries.map(e => setStats(e.sets));
+  const vol = stats.reduce((s, st) => s + st.vol, 0), nSets = stats.reduce((s, st) => s + st.n, 0);
+
+  // Hero
+  $('#lLabel').textContent = key === today ? 'Volume today' : `Volume · ${weekdayName(key, 'short')}`;
+  $('#lValue').innerHTML = vol > 0 ? `${volText(vol)}<i>${unitLabel()}</i>` : nSets > 0 ? `${nSets}<i>sets</i>` : `0<i>${unitLabel()}</i>`;
+  $('#lPill').textContent = entries.length ? `${entries.length} ${entries.length === 1 ? 'exercise' : 'exercises'} · ${nSets} sets` : 'No workout logged';
+  const days7 = Array.from({ length: 7 }, (_, i) => addDays(key, i - 6));
+  $('#lBar').replaceChildren(...days7.map(k => h('i', dayHasSession(k) ? 'on' : '')));
+
+  // KPIs
+  const prev7 = Array.from({ length: 7 }, (_, i) => addDays(key, i - 13));
+  const sess7 = days7.filter(dayHasSession).length, sessPrev = prev7.filter(dayHasSession).length;
+  const vol7 = days7.reduce((s, k) => s + dayVolume(k), 0), volPrev = prev7.reduce((s, k) => s + dayVolume(k), 0);
+  const weekVols = Array.from({ length: 8 }, (_, w) => {
+    const end = addDays(key, -7 * (7 - w));
+    return Array.from({ length: 7 }, (_, i) => addDays(end, i - 6)).reduce((s, k) => s + dayVolume(k), 0);
+  });
+  const prs = allPRs(), prs30 = prs.filter(p => { const n = daysBetween(p.k, key); return n >= 0 && n < 30; }).length;
+  let wk = weekStart(key), streakWeeks = 0;
+  const weekHas = ws => Array.from({ length: 7 }, (_, i) => addDays(ws, i)).some(dayHasSession);
+  if (!weekHas(wk)) wk = addDays(wk, -7);
+  while (weekHas(wk) && streakWeeks < 520) { streakWeeks++; wk = addDays(wk, -7); }
+  const dv = volPrev > 0 ? Math.round((vol7 - volPrev) / volPrev * 100) : null;
+  $('#liftKpis').replaceChildren(
+    kpiTile({ label: 'Sessions · 7 days', tint: 'tint-s', value: String(sess7), sub: `${sessPrev} the week before` }),
+    kpiTile({
+      label: 'Volume · 7 days', value: volText(vol7), unit: unitLabel(),
+      sub: dv == null ? (vol7 > 0 ? 'first week' : 'nothing yet') : dv === 0 ? 'same as last week' : `${dv > 0 ? '▲' : '▼'} ${Math.abs(dv)}% vs last week`,
+      spark: sparkline(weekVols, { color: 'var(--clay)', dot: true }),
+    }),
+    kpiTile({ label: 'Records · 30 days', value: String(prs30), sub: prs30 === 1 ? 'new personal record' : 'new personal records' }),
+    kpiTile({ label: 'Training streak', tint: 'tint-c', value: String(streakWeeks), unit: streakWeeks === 1 ? 'week' : 'weeks', sub: 'in a row with a session' }),
+  );
+
+  renderLiftProgress();
+
+  // Weekly volume (8 weeks)
+  {
+    const W = 320, H = 140, padL = 6, padR = 6, top = 16, bottom = 22;
+    const slot = (W - padL - padR) / 8, bw = Math.min(26, slot * 0.62), innerH = H - top - bottom;
+    const max = Math.max(...weekVols, 1);
+    let out = '';
+    weekVols.forEach((v, i) => {
+      const cx = padL + slot * i + slot / 2, bh = Math.max((v / max) * innerH, v > 0 ? 2 : 0), sel = i === 7;
+      const end = addDays(key, -7 * (7 - i));
+      out += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${(top + innerH - bh).toFixed(1)}" width="${bw}" height="${bh.toFixed(1)}" rx="6" fill="var(--clay)" opacity="${sel ? 1 : 0.4}"><title>Week ending ${shortDate(end)}: ${volText(v)} ${unitLabel()}</title></rect>`;
+      if (v > 0) out += `<text x="${cx.toFixed(1)}" y="${(top + innerH - bh - 4).toFixed(1)}" text-anchor="middle" class="${sel ? 'sel-label' : ''}">${volText(v)}</text>`;
+      out += `<text x="${cx.toFixed(1)}" y="${H - 6}" text-anchor="middle" class="${sel ? 'sel-label' : ''}">${shortDate(end)}</text>`;
+    });
+    $('#liftWeekly').innerHTML = out;
+    $('#wvNote').textContent = unitLabel() + ' · 7-day windows';
+  }
+
+  // Muscle groups (sets in the last 28 days)
+  {
+    const counts = new Map();
+    for (let i = 0; i < 28; i++) for (const e of liftDay(addDays(key, -i))) { const n = setStats(e.sets).n; if (n) counts.set(e.group, (counts.get(e.group) || 0) + n); }
+    const rows = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    const max = rows.length ? rows[0][1] : 1;
+    $('#liftGroups').replaceChildren(...(rows.length ? rows.map(([g2, n]) => {
+      const on = Math.max(1, Math.round(n / max * 10));
+      const row = h('div', 'mrow lg');
+      row.innerHTML = `<span class="l" style="color:var(--clay)"></span><div class="sg">${Array.from({ length: 10 }, (_, i) => `<i${i < on ? ' class="on"' : ''}></i>`).join('')}</div><span class="v"><b>${n}</b> <span>sets</span></span>`;
+      row.querySelector('.l').textContent = g2;
+      return row;
+    }) : [h('div', 'empty-state', 'No sets in the last 28 days.')]));
+  }
+
+  // Records feed
+  $('#liftPRs').replaceChildren(...(prs.length ? prs.slice(0, 6).map(p => {
+    const li = h('li');
+    li.append(h('b', null, p.st.bw ? `${p.st.maxReps} reps` : `${wFmt(p.st.e1rm)} ${unitLabel()}`), h('span', null, `${p.name}${p.st.bw ? '' : ' · est. 1RM'}`), h('small', null, shortDate(p.k)));
+    return li;
+  }) : [h('li', null, 'Records appear once you have two or more sessions of a lift.')]));
+
+  // Heatmap (5 weeks)
+  {
+    const dow = (parseKey(today).getDay() + 6) % 7, start = addDays(today, -dow - 28);
+    const cells = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => h('div', 'dow', d));
+    for (let i = 0; i < 35; i++) {
+      const k = addDays(start, i), trained = dayHasSession(k);
+      const b = h('button', `cell${trained ? ' sess' : ''}${k > today ? ' future' : ''}${k === today ? ' today' : ''}${k === key ? ' sel' : ''}`, String(parseKey(k).getDate()));
+      b.type = 'button';
+      b.setAttribute('aria-label', `${parseKey(k).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}: ${trained ? 'trained' : 'rest'}`);
+      b.addEventListener('click', () => { liftKey = k; renderLift(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+      cells.push(b);
+    }
+    $('#liftHeat').replaceChildren(...cells);
+  }
+}
+
+function renderLiftProgress() {
+  const host = $('#liftProgress'), exs = exercisesWithHistory();
+  if (!exs.length) {
+    $('#pMetricLbl').textContent = '';
+    host.replaceChildren(h('div', 'empty-state', 'Log a lift on two or more days and your strength trend, records and next-session targets show up here.'));
+    return;
+  }
+  if (!exs.some(e => e.id === liftEx)) liftEx = exs[0].id;
+  const hist = liftHistory(liftEx), fl = prFlags(hist), bw = hist.every(it => it.st.bw);
+  const sel = h('div', 'exsel'), select = h('select');
+  select.setAttribute('aria-label', 'Exercise');
+  select.append(...exs.map(e => new Option(e.name, e.id)));
+  select.value = liftEx;
+  select.addEventListener('change', () => { liftEx = select.value; renderLiftProgress(); });
+  sel.append(select);
+
+  const metrics = bw ? [['e1rm', 'Best reps'], ['vol', 'Total reps']] : [['e1rm', 'Est. 1RM'], ['top', 'Top weight'], ['vol', 'Volume']];
+  if (!metrics.some(m => m[0] === liftMetric)) liftMetric = 'e1rm';
+  const seg = h('div', 'seg'); seg.style.margin = '8px 18px 6px';
+  for (const [id, label] of metrics) {
+    const b = h('button', null, label); b.type = 'button'; b.setAttribute('aria-pressed', String(id === liftMetric));
+    b.addEventListener('click', () => { liftMetric = id; renderLiftProgress(); });
+    seg.append(b);
+  }
+  const unitTxt = liftMetric === 'vol' && !bw ? unitLabel() : bw ? 'reps' : unitLabel();
+  $('#pMetricLbl').textContent = unitTxt;
+  const val = it => {
+    if (liftMetric === 'vol') return bw ? it.st.reps : toDisp(it.st.vol);
+    if (liftMetric === 'top') return toDisp(it.st.topW);
+    return bw ? it.st.maxReps : toDisp(it.st.e1rm);
+  };
+  const recent = hist.slice(-24);
+  const pts = recent.map((it, i) => ({ k: it.k, v: val(it), pr: fl[hist.length - recent.length + i] }));
+  const svg = h('div', 'pb'); svg.style.paddingBottom = '0';
+  const chart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  chart.setAttribute('viewBox', '0 0 320 150'); chart.setAttribute('class', 'chart'); chart.setAttribute('role', 'img');
+  chart.setAttribute('aria-label', `${select.selectedOptions[0].text} progress`);
+  chart.innerHTML = lineSvg(pts, v => (liftMetric === 'vol' || bw ? Math.round(v).toLocaleString() : fmt(v)));
+  svg.append(chart);
+
+  // Summary stats + status
+  const best = hist.reduce((m, it) => Math.max(m, scoreOf(it.st)), 0), bestTop = hist.reduce((m, it) => Math.max(m, it.st.topW), 0);
+  const stat = (label, value) => { const d = h('div'); d.append(h('small', null, label), h('b', null, value)); return d; };
+  const pst = h('div', 'pstats');
+  pst.append(
+    stat(bw ? 'Best reps' : 'Best e1RM', bw ? String(best) : `${wFmt(best)} ${unitLabel()}`),
+    stat(bw ? 'Sessions' : 'Heaviest set', bw ? String(hist.length) : `${wFmt(bestTop)} ${unitLabel()}`),
+    stat('Sessions', String(hist.length)),
+  );
+  if (bw) pst.lastChild.replaceWith(stat('Total reps', hist.reduce((s, it) => s + it.st.reps, 0).toLocaleString()));
+
+  const status = h('span', 'status');
+  const lastN = hist.slice(-4);
+  if (lastN.length < 3) { status.classList.add('new'); status.textContent = 'Building history · log 3+ sessions'; }
+  else {
+    const a = scoreOf(lastN[0].st), b2 = scoreOf(lastN[lastN.length - 1].st), pc = a > 0 ? (b2 - a) / a * 100 : 0;
+    if (pc > 1) { status.classList.add('up'); status.textContent = `Progressing · ${pc >= 10 ? Math.round(pc) : r1(pc)}% over the last ${lastN.length} sessions`; }
+    else if (pc < -1) { status.classList.add('down'); status.textContent = `Dropping · ${r1(Math.abs(pc))}% below ${lastN.length} sessions ago`; }
+    else { status.classList.add('flat'); status.textContent = `Plateau · flat across ${lastN.length} sessions`; }
+  }
+  const lastIt = hist[hist.length - 1], sg = suggestNext(lastIt.st);
+  const next = h('p', 'chart-note'); next.style.padding = '4px 18px 8px';
+  next.textContent = sg ? (bw ? `Next session: try ${sg.text}. Add a rep each session; when it gets easy, add weight.` : `Next session: try ${sg.text}. Add a rep each time until you hit 10, then add weight and go back to 8.`) : '';
+
+  // Recent sessions table
+  const list = h('div', 'plist');
+  const hd = h('div', 'ph2'); hd.append(h('span', null, 'Date'), h('span', null, 'Best set'), h('span', null, bw ? 'Reps' : 'e1RM'), h('span', null, bw ? '' : 'Vol'));
+  list.append(hd);
+  for (let i = hist.length - 1; i >= Math.max(0, hist.length - 6); i--) {
+    const it = hist[i], prevIt = hist[i - 1];
+    const row = h('div', 'pr');
+    const top = it.st.topSet;
+    const sc = scoreOf(it.st), d = prevIt ? sc - scoreOf(prevIt.st) : 0;
+    const c3 = h('span', d > 0.01 ? 'up' : d < -0.01 ? 'down' : '', bw ? String(it.st.maxReps) : wFmt(it.st.e1rm));
+    row.append(h('span', null, shortDate(it.k)), h('span', null, top ? (top.w > 0 ? `${wFmt(top.w)} × ${top.r}` : `${top.r} reps`) : '—'), c3, h('span', null, bw ? '' : volText(it.st.vol)));
+    if (fl[i]) row.firstChild.textContent += ' ★';
+    list.append(row);
+  }
+  host.replaceChildren(sel, pst, status, svg, seg, next, list);
+}
+
+/* ---------- Exercise picker ---------- */
+const exDlg = $('#exDlg');
+function exUsage() { const m = new Map(); for (const list of Object.values(state.lifts.log)) for (const e of list) m.set(e.exId, (m.get(e.exId) || 0) + 1); return m; }
+function renderExList() {
+  const q = $('#exSearch').value.trim(), ql = keyOfName(q), usage = exUsage();
+  const items = state.lifts.exercises.filter(e => !ql || keyOfName(e.name).includes(ql))
+    .sort((a, b) => (usage.get(b.id) || 0) - (usage.get(a.id) || 0) || a.name.localeCompare(b.name));
+  const exact = state.lifts.exercises.some(e => keyOfName(e.name) === ql);
+  const box = $('#exList');
+  box.hidden = !items.length;
+  box.replaceChildren(...items.map(ex => {
+    const b = h('button', 'result'); b.type = 'button';
+    const prev = lastBefore(ex.id, liftKey);
+    b.innerHTML = '<div class="r-name"></div><div class="r-sub"></div>';
+    b.querySelector('.r-name').textContent = ex.name;
+    b.querySelector('.r-sub').textContent = ex.group + (prev ? ` · last ${shortDate(prev.k)}: ${setLine(prev.e.sets.filter(s => s.r > 0).slice(0, 3))}` : '');
+    b.addEventListener('click', () => { closeDlg(exDlg); addExerciseToDay(ex); });
+    return b;
+  }));
+  const creating = !!q && !exact;
+  $('#exNew').hidden = !creating; $('#exCreate').hidden = !creating;
+  $('#exCreate').textContent = creating ? `Create “${q.length > 24 ? q.slice(0, 24) + '…' : q}” & add` : '';
+}
+function openExDlg() {
+  $('#exGroup').replaceChildren(...GROUPS.map(g2 => new Option(g2, g2)));
+  $('#exSearch').value = ''; renderExList(); exDlg.showModal(); $('#exSearch').focus();
+}
+$('#exSearch').addEventListener('input', renderExList);
+$('#exForm').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const name = $('#exSearch').value.trim().slice(0, 60);
+  if (!name) return;
+  let ex = state.lifts.exercises.find(e => keyOfName(e.name) === keyOfName(name));
+  if (!ex) { ex = { id: uid(), name, group: GROUPS.includes($('#exGroup').value) ? $('#exGroup').value : 'Other' }; state.lifts.exercises.push(ex); }
+  closeDlg(exDlg); addExerciseToDay(ex);
+});
+$('#exCancel').addEventListener('click', () => closeDlg(exDlg));
+$('#liftFab').addEventListener('click', openExDlg);
+$('#lStart').addEventListener('click', openExDlg);
+$('#liftPrev').addEventListener('click', () => { liftKey = addDays(liftKey, -1); renderLift(); });
+$('#liftNext').addEventListener('click', () => { liftKey = addDays(liftKey, 1); renderLift(); });
+$('#liftToday').addEventListener('click', () => { liftKey = todayKey(); renderLift(); });
+
+/* ---------- Settings: exercise library, lifts CSV ---------- */
+function renderExLibList() {
+  const host = $('#exLibList');
+  if (!state.lifts.exercises.length) { host.replaceChildren(h('p', 'calc-note', 'No exercises. Add one from the Lifting screen.')); return; }
+  host.replaceChildren(...state.lifts.exercises.map(ex => {
+    const row = h('div', 'food-row');
+    row.append(h('span', 'n', ex.name), h('span', 'm', ex.group));
+    const rm = h('button', null, '×'); rm.type = 'button'; rm.setAttribute('aria-label', 'Remove ' + ex.name);
+    rm.addEventListener('click', () => { state.lifts.exercises = state.lifts.exercises.filter(x => x.id !== ex.id); save(); renderExLibList(); });
+    row.append(rm);
+    return row;
+  }));
+}
+$('#liftCsvBtn').addEventListener('click', () => {
+  const esc = v => { v = String(v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return `"${v.replace(/"/g, '""')}"`; };
+  const rows = [['date', 'exercise', 'muscle_group', 'set', 'weight_kg', 'reps', 'est_1rm_kg']];
+  for (const k of Object.keys(state.lifts.log).sort()) for (const e of state.lifts.log[k]) e.sets.forEach((s, i) => {
+    rows.push([k, esc(e.name), e.group, i + 1, s.w, s.r, r1(e1rmOf(s.w, s.r))]);
+  });
+  download(`lifts-${todayKey()}.csv`, rows.map(r => r.join(',')).join('\n'), 'text/csv');
+});
+
 // Ask the browser not to evict our data under storage pressure
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch { /* ignore */ }
 
-render();
-setSync(state.settings.ghToken ? 'idle' : 'idle');
+{ const v0 = location.hash.replace(/^#\/?/, ''); go(VIEWS.includes(v0) ? v0 : 'landing', false); }
+setSync('idle');
 syncNow(); // pull history from GitHub (read-only works without a token)
 })();
 </script>
