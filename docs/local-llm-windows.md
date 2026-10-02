@@ -80,6 +80,8 @@ You should see JSON that lists `qwen2.5:7b-instruct`. If the page doesn't load, 
 3. Press **Test connection**. It should say "Connected" and confirm the model is installed.
 4. Press **Save**.
 
+Also add your free **USDA key** in the same Settings screen (the field just above). The AI picks the foods and amounts, and USDA supplies the actual numbers. Without your own key, the shared demo key allows only a handful of lookups per hour.
+
 Now in **Meals → Add food**, type what you ate in the **Describe what you ate** box and press **Estimate with AI**. Check the numbers, then **Add all**, or tap **Edit** on any item to adjust it first. The server address stays on your device and is never included in backups or GitHub sync.
 
 ---
@@ -106,7 +108,8 @@ Now in **Meals → Add food**, type what you ate in the **Describe what you ate*
 | Works in a browser tab but the app fails | `OLLAMA_ORIGINS` isn't applied. Re-run the `setx` line, then fully quit and reopen Ollama. |
 | "Model not found" | The model name in Settings must match `ollama list` exactly. |
 | "The AI took too long" | PC asleep, or the model is loading. Try again. Check `ollama ps` shows it on the GPU. |
-| Numbers look wrong | It is a small model estimating from general knowledge. Tap **Edit**, or log a food from search for precise values. |
+| Numbers look wrong | Items tagged **USDA** use real database values scaled to the grams shown, so fix the grams if the amount is off. Items tagged **AI ESTIMATE** had no close USDA match and are the model's guess. Tap **Edit** to adjust either. |
+| "USDA lookup limit reached" | Add your own free USDA key in Settings. |
 
 ## Choosing a different model
 

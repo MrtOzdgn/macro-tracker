@@ -333,6 +333,13 @@ button.logo { background: none; border: 0; padding: 0; font-family: inherit; cur
 
 /* AI estimate */
 #aiResults { max-height: none; overflow: visible; }
+.aisrc { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.aisrc input { width: 78px; padding: 6px 8px; font: 500 12.5px var(--mono); text-align: center; border-radius: 10px; }
+.src { font: 700 10px var(--mono); border-radius: 99px; padding: 2px 8px; letter-spacing: .04em; }
+.src.usda { background: var(--sage-l); color: var(--sage-d); }
+.src.ai { background: var(--sun-l); color: #7a5a12; }
+@media (prefers-color-scheme: dark) { .src.usda { color: var(--sage); } .src.ai { color: var(--sun); } }
+.aisrc .desc { flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .airow { padding: 9px 12px; border-top: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
 .airow:first-child { border-top: 0; }
 .airow b { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
@@ -705,7 +712,7 @@ button.logo { background: none; border: 0; padding: 0; font-family: inherit; cur
     <div class="field"><label for="sAiModel">Model</label><input id="sAiModel" type="text" autocomplete="off" spellcheck="false" placeholder="qwen2.5:7b-instruct"></div>
     <button type="button" class="btn small" id="aiTest">Test connection</button>
     <p class="calc-note" id="aiTestOut" role="status" style="margin-top:10px"></p>
-    <p class="calc-note">Describe a meal in plain language and a model running on your own PC estimates calories and macros. Setup steps are in docs/local-llm-windows.md in the repository. The address stays on this device and is left out of backups and GitHub sync.</p>
+    <p class="calc-note">Describe a meal in plain language. A model on your own PC works out the foods and amounts, and the numbers are checked against USDA FoodData Central (using the USDA key above). Setup steps are in docs/local-llm-windows.md in the repository. The address stays on this device and is left out of backups and GitHub sync.</p>
 
     <hr class="divider">
     <h3>History sync (GitHub)</h3>
@@ -2711,22 +2718,24 @@ $('#liftCsvBtn').addEventListener('click', () => {
   download(`lifts-${todayKey()}.csv`, rows.map(r => r.join(',')).join('\n'), 'text/csv');
 });
 
-/* ================= Local AI (Ollama): describe a meal, get estimates ================= */
+/* ================= Local AI (Ollama): describe a meal, check it against USDA ================= */
+// The model only turns a sentence into foods + a search phrase + a weight; USDA supplies the numbers when it can.
 const AI_SCHEMA = {
   type: 'object',
   properties: { items: { type: 'array', maxItems: 12, items: { type: 'object',
-    properties: { name: { type: 'string' }, kcal: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' } },
-    required: ['name', 'kcal', 'protein', 'carbs', 'fat'] } } },
+    properties: { name: { type: 'string' }, query: { type: 'string' }, grams: { type: 'number' }, kcal: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' } },
+    required: ['name', 'query', 'grams', 'kcal', 'protein', 'carbs', 'fat'] } } },
   required: ['items'],
 };
-const AI_SYSTEM = 'You are a nutrition estimator inside a food diary app. The user describes what they ate, in English or Turkish. '
-  + 'Split it into separate food items. For each item estimate calories (kcal) and protein, carbohydrates and fat in grams for the whole amount eaten (not per 100 g), '
-  + 'using typical values from public nutrition databases such as USDA. If no amount is given, assume one typical serving. '
-  + 'Keep names short and include the amount, for example "2 eggs, boiled". Write names in the same language as the user. Reply with JSON only.';
+const AI_SYSTEM = 'You are a nutrition assistant inside a food diary app. The user describes what they ate, in English or Turkish. Split it into separate food items. '
+  + 'For each item return: name (short, in the same language as the user, including the amount, e.g. "2 eggs, boiled"); '
+  + 'query (a plain English search phrase for the USDA FoodData Central database, generic food only, no brand names and no amounts, e.g. "egg whole cooked hard-boiled" or "bread whole wheat"); '
+  + 'grams (your best estimate of the total weight eaten, in grams; for example 1 egg is 50 g, 1 slice of bread 30 g, 1 glass of a drink 200 g); '
+  + 'and kcal, protein, carbs and fat (grams) for that whole amount. Reply with JSON only.';
 const AI_EXAMPLE_IN = '2 eggs and a slice of toast with butter';
 const AI_EXAMPLE_OUT = JSON.stringify({ items: [
-  { name: '2 eggs, boiled', kcal: 155, protein: 12.6, carbs: 1.1, fat: 10.6 },
-  { name: '1 slice toast with butter', kcal: 140, protein: 3, carbs: 13, fat: 8 },
+  { name: '2 eggs, boiled', query: 'egg whole cooked hard-boiled', grams: 100, kcal: 155, protein: 12.6, carbs: 1.1, fat: 10.6 },
+  { name: '1 slice toast with butter', query: 'bread white toasted', grams: 35, kcal: 130, protein: 3, carbs: 14, fat: 7 },
 ] });
 let aiItems = [], aiCtl = null;
 const aiBase = () => state.settings.aiUrl.replace(/\/+$/, '');
@@ -2746,9 +2755,78 @@ function parseAiItems(content) {
     let kcal = Math.round(clamp(it && it.kcal, 6000));
     const implied = kcalOf({ p, c, f });
     if (!kcal) kcal = Math.round(implied);
-    return { name, p, c, f, kcal, odd: kcal > 0 && Math.abs(kcal - implied) > Math.max(60, kcal * 0.3) };
+    return {
+      name, p, c, f, kcal, fiber: 0, sugar: 0, sodium: 0, src: 'ai',
+      query: String(it && it.query || '').trim().slice(0, 100), grams: Math.round(clamp(it && it.grams, 5000)),
+      odd: kcal > 0 && Math.abs(kcal - implied) > Math.max(60, kcal * 0.3),
+    };
   }).filter(it => it.name && (it.kcal > 0 || it.p > 0));
 }
+
+/* --- USDA cross-check --- */
+const USDA_CACHE_KEY = 'macro-tracker-usda-cache';
+const usdaCache = (() => { try { return new Map(JSON.parse(localStorage.getItem(USDA_CACHE_KEY) || '[]')); } catch { return new Map(); } })();
+function usdaCachePut(key, value) {
+  usdaCache.set(key, value);
+  while (usdaCache.size > 150) usdaCache.delete(usdaCache.keys().next().value);
+  try { localStorage.setItem(USDA_CACHE_KEY, JSON.stringify([...usdaCache])); } catch { /* ignore */ }
+}
+function usdaPer100(food) {
+  const n = {};
+  for (const x of food.foodNutrients || []) if (typeof x.value === 'number') n[x.nutrientId] = x.value;
+  if (typeof n[1003] !== 'number' || typeof n[1004] !== 'number' || typeof n[1005] !== 'number') return null;
+  const e = [1008, 2047, 2048].map(id => n[id]).find(v => typeof v === 'number' && v >= 0);
+  return { kcal: e != null ? e : kcalOf({ p: n[1003], c: n[1005], f: n[1004] }), p: n[1003], c: n[1005], f: n[1004], fiber: n[1079] || 0, sugar: n[2000] || 0, sodium: n[1093] || 0 };
+}
+async function usdaCandidates(query, types, signal) {
+  const key = types + '|' + query.toLowerCase();
+  if (usdaCache.has(key)) return usdaCache.get(key);
+  const apiKey = state.settings.usdaKey || 'DEMO_KEY';
+  const run = async all => {
+    const url = 'https://api.nal.usda.gov/fdc/v1/foods/search?pageSize=8&dataType=' + encodeURIComponent(types) + '&requireAllWords=' + all
+      + '&api_key=' + encodeURIComponent(apiKey) + '&query=' + encodeURIComponent(query);
+    const res = await fetch(url, { signal });
+    if (res.status === 429) { const e = new Error('rate'); e.rate = true; throw e; }
+    if (!res.ok) throw new Error('usda ' + res.status);
+    const data = await res.json();
+    return (data.foods || []).map(f => ({ desc: String(f.description || '').slice(0, 90), per100: usdaPer100(f) })).filter(c => c.per100);
+  };
+  let list = await run(true);
+  if (!list.length) list = await run(false);
+  usdaCachePut(key, list);
+  return list;
+}
+// Use the model's own estimate as a sanity check, so "egg" can't silently match dried egg powder
+function pickUsda(cands, it) {
+  if (!(it.grams > 0)) return null;
+  for (const c of cands) {
+    const k = c.per100.kcal * it.grams / 100;
+    if (!(it.kcal > 0) || Math.abs(k - it.kcal) <= 30 || (k >= it.kcal * 0.6 && k <= it.kcal * 1.7)) return c;
+  }
+  return null;
+}
+function applyGrams(it, g) {
+  it.grams = g;
+  const k = g / 100, d = it.per100;
+  it.kcal = Math.round(d.kcal * k); it.p = r1(d.p * k); it.c = r1(d.c * k); it.f = r1(d.f * k);
+  it.fiber = r1(d.fiber * k); it.sugar = r1(d.sugar * k); it.sodium = Math.round(d.sodium * k); it.odd = false;
+}
+async function resolveAiItems(items, signal) {
+  let rateLimited = false;
+  await Promise.all(items.map(async it => {
+    if (!it.query || !(it.grams > 0)) return;
+    try {
+      let c = pickUsda(await usdaCandidates(it.query, 'Foundation,SR Legacy', signal), it);
+      if (!c) c = pickUsda(await usdaCandidates(it.query, 'Survey (FNDDS)', signal), it);
+      if (c) { it.src = 'usda'; it.match = c.desc; it.per100 = c.per100; applyGrams(it, it.grams); }
+    } catch (err) {
+      if (err.name === 'AbortError') throw err;
+      if (err.rate) rateLimited = true; // keep the AI estimate for this item
+    }
+  }));
+  return rateLimited;
+}
+
 async function aiEstimate() {
   const text = $('#aiText').value.trim();
   if (!state.settings.aiUrl) { aiStatus('Add your server address in Settings first.'); return; }
@@ -2763,7 +2841,7 @@ async function aiEstimate() {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal,
       body: JSON.stringify({
         model: state.settings.aiModel || 'qwen2.5:7b-instruct', stream: false, keep_alive: '30m', format: AI_SCHEMA,
-        options: { temperature: 0.2, num_ctx: 2048, num_predict: 700 },
+        options: { temperature: 0.2, num_ctx: 2048, num_predict: 900 },
         messages: [
           { role: 'system', content: AI_SYSTEM },
           { role: 'user', content: AI_EXAMPLE_IN }, { role: 'assistant', content: AI_EXAMPLE_OUT },
@@ -2774,29 +2852,48 @@ async function aiEstimate() {
     if (!res.ok) throw new Error(res.status === 404 ? 'Model not found. Check the model name in Settings.' : 'The AI server answered ' + res.status);
     const data = await res.json();
     aiItems = parseAiItems(data && data.message && data.message.content || '');
-    aiStatus(aiItems.length ? '' : 'The AI didn’t return any foods. Try rephrasing.');
+    if (!aiItems.length) { aiStatus('The AI didn’t return any foods. Try rephrasing.'); return; }
+    aiStatus('Checking the numbers against USDA…');
+    const limited = await resolveAiItems(aiItems, ctl.signal);
+    const fromUsda = aiItems.filter(it => it.src === 'usda').length;
+    aiStatus(limited ? 'USDA lookup limit reached, so some items are AI estimates. Add your free USDA key in Settings.'
+      : fromUsda === 0 ? 'No close USDA match, so these are AI estimates.' : '');
   } catch (err) {
     if (err.name === 'AbortError' && !timedOut) return; // dialog closed or superseded
+    aiItems = [];
     aiStatus(timedOut ? 'The AI took too long. Is the PC awake and the model loaded?'
       : err instanceof TypeError ? 'Couldn’t reach your AI server. Check Tailscale is connected on this device and the address in Settings.'
       : err.message || 'AI estimate failed.');
   } finally { clearTimeout(timer); $('#aiBtn').disabled = false; renderAiResults(); }
 }
+const aiNutr = it => cleanNutr({ p: it.p, c: it.c, f: it.f, fiber: it.fiber, sugar: it.sugar, sodium: it.sodium, kcal: it.kcal });
 function renderAiResults() {
   const box = $('#aiResults');
   box.hidden = !aiItems.length;
   if (!aiItems.length) { box.replaceChildren(); return; }
   const rows = aiItems.map(it => {
     const row = h('div', 'airow');
-    row.append(h('b', null, (it.odd ? '⚠ ' : '') + it.name), h('span', 'm', `${it.kcal} kcal · P ${fmt(it.p)} · C ${fmt(it.c)} · F ${fmt(it.f)}`));
-    if (it.odd) row.firstChild.title = 'The calories and macros don’t quite add up. Worth a check.';
+    const title = h('b', null, (it.odd ? '⚠ ' : '') + it.name);
+    if (it.odd) title.title = 'The calories and macros don’t quite add up. Worth a check.';
+    row.append(title, h('span', 'm', `${it.kcal} kcal · P ${fmt(it.p)} · C ${fmt(it.c)} · F ${fmt(it.f)}`));
     const ed = h('button', 'btn small', 'Edit'); ed.type = 'button';
     ed.addEventListener('click', () => {
       aiItems = aiItems.filter(x => x !== it); renderAiResults();
-      fillFromFood({ name: it.name, ...cleanNutr({ p: it.p, c: it.c, f: it.f, kcal: it.kcal }) });
+      fillFromFood({ name: it.name, ...aiNutr(it) });
       $('#fServ').focus();
     });
     row.append(ed);
+    const src = h('div', 'aisrc');
+    if (it.src === 'usda') {
+      const gi = h('input'); gi.type = 'number'; gi.min = '1'; gi.step = 'any'; gi.inputMode = 'decimal'; gi.value = it.grams; gi.setAttribute('aria-label', 'Grams of ' + it.name);
+      gi.addEventListener('change', () => { const g = parseFloat(gi.value); if (Number.isFinite(g) && g > 0 && g <= 5000) { applyGrams(it, Math.round(g * 10) / 10); renderAiResults(); } else gi.value = it.grams; });
+      const tag = h('span', 'src usda', 'USDA'); tag.title = 'Matched: ' + it.match;
+      src.append(gi, h('span', null, 'g'), tag, h('span', 'desc', it.match));
+    } else {
+      const tag = h('span', 'src ai', 'AI ESTIMATE'); tag.title = 'No close USDA match was found for this item';
+      src.append(tag, h('span', 'desc', it.grams > 0 ? `about ${it.grams} g` : ''));
+    }
+    row.append(src);
     return row;
   });
   const tot = aiItems.reduce((t, it) => ({ kcal: t.kcal + it.kcal, p: t.p + it.p }), { kcal: 0, p: 0 });
@@ -2804,12 +2901,13 @@ function renderAiResults() {
   const all = h('button', 'btn primary small', `Add all (${aiItems.length})`); all.type = 'button';
   all.addEventListener('click', aiAddAll);
   foot.append(h('span', null, `${Math.round(tot.kcal)} kcal · P ${fmt(tot.p)} g`), all);
-  box.replaceChildren(...rows, foot, h('div', 'attrib', 'Estimated by an AI, so numbers can be off. Tap Edit to adjust an item.'));
+  const usdaN = aiItems.filter(it => it.src === 'usda').length;
+  box.replaceChildren(...rows, foot, h('div', 'attrib', usdaN ? `${usdaN} of ${aiItems.length} checked against USDA FoodData Central. Edit the grams if the amount is off.` : 'Estimated by an AI, so numbers can be off. Tap Edit to adjust an item.'));
 }
 function aiAddAll() {
   if (!aiItems.length) return;
   const key = viewKey, meal = $('#fMeal').value;
-  const entries = aiItems.map(it => ({ id: uid(), name: it.name, meal, servings: 1, ...cleanNutr({ p: it.p, c: it.c, f: it.f, kcal: it.kcal }) }));
+  const entries = aiItems.map(it => ({ id: uid(), name: it.name, meal, servings: 1, ...aiNutr(it) }));
   (state.log[key] ||= []).push(...entries);
   save(); closeDlg(entryDlg); render();
   const ids = new Set(entries.map(e => e.id));
