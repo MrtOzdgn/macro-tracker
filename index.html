@@ -205,10 +205,11 @@ dialog::backdrop { background: rgba(20,28,20,.45); backdrop-filter: blur(10px); 
 .dlg h3 { margin: 0 0 12px; font: 400 20px var(--serif); }
 .field { display: grid; gap: 4px; margin-bottom: 12px; }
 .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
-input[type="number"], input[type="search"], input[type="text"], input[type="password"], .field input, .field select, .wform input {
+input[type="number"], input[type="search"], input[type="text"], input[type="password"], .field input, .field select, .field textarea, .wform input {
   width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid transparent; background: var(--surface-2);
 }
-input:focus, select:focus { outline: 0; border-color: var(--sage-d); background: var(--surface); }
+textarea { font: inherit; resize: vertical; min-height: 64px; }
+input:focus, select:focus, textarea:focus { outline: 0; border-color: var(--sage-d); background: var(--surface); }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; scrollbar-width: thin; }
@@ -329,6 +330,15 @@ button.logo { background: none; border: 0; padding: 0; font-family: inherit; cur
 .prfeed li small { color: var(--muted); font: 400 12px var(--mono); margin-left: auto; white-space: nowrap; }
 .mrow.lg { --c: var(--clay); }
 .cell.sess { background: var(--clay); color: #fff; }
+
+/* AI estimate */
+#aiResults { max-height: none; overflow: visible; }
+.airow { padding: 9px 12px; border-top: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
+.airow:first-child { border-top: 0; }
+.airow b { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.airow .m { grid-column: 1; font: 400 12px var(--mono); color: var(--muted); }
+.airow .btn { grid-column: 2; grid-row: 1 / 3; }
+.aitotal { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); font: 500 12.5px var(--mono); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -513,6 +523,17 @@ button.logo { background: none; border: 0; padding: 0; font-family: inherit; cur
       <button type="button" data-mode="food" aria-pressed="true">Food</button>
       <button type="button" data-mode="quick" aria-pressed="false">Quick add</button>
     </div>
+    <div id="aiWrap" data-only="food">
+      <div class="field">
+        <label for="aiText">Describe what you ate</label>
+        <textarea id="aiText" rows="2" maxlength="400" placeholder="e.g. 2 eggs, a slice of toast and a glass of ayran"></textarea>
+      </div>
+      <div class="searchrow" style="margin-bottom:10px">
+        <button type="button" class="btn primary small" id="aiBtn">Estimate with AI</button>
+        <span id="aiStatus" class="chip-hint" role="status" aria-live="polite" style="align-self:center;margin:0"></span>
+      </div>
+      <div id="aiResults" class="results" hidden></div>
+    </div>
     <div id="searchWrap" data-only="food">
       <div class="field">
         <label for="fSearch">Search food database</label>
@@ -679,6 +700,12 @@ button.logo { background: none; border: 0; padding: 0; font-family: inherit; cur
     <div class="field"><label for="sUnit">Weight units</label><select id="sUnit"><option value="kg">Kilograms (kg)</option><option value="lb">Pounds (lb)</option></select></div>
     <div class="field"><label for="sKey">USDA FoodData Central key (optional)</label><input id="sKey" type="text" autocomplete="off" spellcheck="false" placeholder="Paste a free key for more searches"></div>
     <p class="calc-note">Food search uses Open Food Facts first. If it is down or finds nothing, it falls back to USDA FoodData Central. Without your own free key (fdc.nal.usda.gov) that fallback is limited to a few lookups an hour. The key stays on this device and is left out of backups.</p>
+    <h3 style="margin-top:22px">Local AI (Ollama)</h3>
+    <div class="field"><label for="sAiUrl">Server address</label><input id="sAiUrl" type="text" autocomplete="off" spellcheck="false" placeholder="https://your-pc.your-tailnet.ts.net"></div>
+    <div class="field"><label for="sAiModel">Model</label><input id="sAiModel" type="text" autocomplete="off" spellcheck="false" placeholder="qwen2.5:7b-instruct"></div>
+    <button type="button" class="btn small" id="aiTest">Test connection</button>
+    <p class="calc-note" id="aiTestOut" role="status" style="margin-top:10px"></p>
+    <p class="calc-note">Describe a meal in plain language and a model running on your own PC estimates calories and macros. Setup steps are in docs/local-llm-windows.md in the repository. The address stays on this device and is left out of backups and GitHub sync.</p>
 
     <hr class="divider">
     <h3>History sync (GitHub)</h3>
@@ -808,7 +835,7 @@ function defaults() {
     foods: STARTER_FOODS.map(f => ({ id: uid(), ...cleanNutr(f), name: f.name })),
     log: {},
     weights: {},
-    settings: { unit: 'kg', profile: null, usdaKey: '', ghToken: '', lastBackup: null, backupSnooze: null },
+    settings: { unit: 'kg', profile: null, usdaKey: '', ghToken: '', aiUrl: '', aiModel: '', lastBackup: null, backupSnooze: null },
   };
 }
 // Per-serving nutrition. `kcal` is only kept when it differs from what the macros imply.
@@ -827,6 +854,10 @@ function cleanGoals(g, fb) {
   let kcal = Math.round(num(g.kcal));
   if (!kcal) kcal = Math.round(kcalOf({ p, c, f })) || fb.kcal;
   return { kcal, p, c, f };
+}
+function cleanAiUrl(v) {
+  if (typeof v !== 'string' || !v.trim() || v.length > 200) return '';
+  try { const u = new URL(v.trim()); return /^https?:$/.test(u.protocol) ? u.origin + u.pathname.replace(/\/+$/, '') : ''; } catch { return ''; }
 }
 function sanitize(raw, fromRemote = false) {
   const d = defaults();
@@ -888,6 +919,8 @@ function sanitize(raw, fromRemote = false) {
       goal: ['cut', 'keep', 'gain'].includes(pr.goal) ? pr.goal : 'keep',
     } : null,
     ghToken: typeof s.ghToken === 'string' && GH_TOKEN_RE.test(s.ghToken.trim()) ? s.ghToken.trim() : '',
+    aiUrl: cleanAiUrl(s.aiUrl),
+    aiModel: typeof s.aiModel === 'string' ? s.aiModel.trim().slice(0, 80) : '',
     usdaKey: typeof s.usdaKey === 'string' && /^[A-Za-z0-9]{20,60}$/.test(s.usdaKey.trim()) ? s.usdaKey.trim() : '',
     lastBackup: Number.isFinite(s.lastBackup) ? s.lastBackup : null,
     backupSnooze: Number.isFinite(s.backupSnooze) ? s.backupSnooze : null,
@@ -1442,6 +1475,7 @@ function openEntry(entry, opts = {}) {
   $('#delEntry').hidden = !entry;
   $('#modeSeg').hidden = !!entry;
   $('#searchWrap').hidden = !!entry;
+  $('#aiWrap').hidden = !!entry; aiReset();
   $('#saveRow').hidden = !!entry;
   $('#fMeal').replaceChildren(...MEALS.map(m => new Option(m, m)));
   const e = entry || {};
@@ -1803,7 +1837,8 @@ function openSettings(focusId) {
   const tr = e.training || e.rest;
   $('#tK').value = tr.kcal; $('#tP').value = tr.p; $('#tC').value = tr.c; $('#tF').value = tr.f;
   $('#useTrain').checked = !!e.training; $('#trainBox').hidden = !e.training; setTrainRequired(!!e.training);
-  $('#sUnit').value = state.settings.unit; $('#sKey').value = state.settings.usdaKey; $('#sTok').value = state.settings.ghToken; calcUnit = state.settings.unit; syncCalcUnit(calcUnit);
+  $('#sUnit').value = state.settings.unit; $('#sKey').value = state.settings.usdaKey; $('#sTok').value = state.settings.ghToken;
+  $('#sAiUrl').value = state.settings.aiUrl; $('#sAiModel').value = state.settings.aiModel; $('#aiTestOut').textContent = ''; calcUnit = state.settings.unit; syncCalcUnit(calcUnit);
   const pr = state.settings.profile;
   $('#cSex').value = pr ? pr.sex : 'm';
   $('#cAge').value = pr && pr.age ? pr.age : '';
@@ -1878,6 +1913,9 @@ $('#setForm').addEventListener('submit', ev => {
   if (training && !training.kcal) return;
   const ghToken = $('#sTok').value.trim();
   if (ghToken && !GH_TOKEN_RE.test(ghToken)) { toast('That doesn’t look like a GitHub token. It should start with github_pat_.'); return; }
+  const aiRaw = $('#sAiUrl').value.trim(), aiUrl = cleanAiUrl(aiRaw);
+  if (aiRaw && !aiUrl) { toast('That server address doesn’t look right. It should start with https://'); return; }
+  if (aiUrl && location.protocol === 'https:' && aiUrl.startsWith('http:') && !/^http:\/\/(localhost|127\.0\.0\.1)/.test(aiUrl)) { toast('This page is secure, so the server address must start with https://'); return; }
   const usdaKey = $('#sKey').value.trim();
   if (usdaKey && !/^[A-Za-z0-9]{20,60}$/.test(usdaKey)) { toast('That USDA key doesn’t look right. Keys are about 40 letters and numbers.'); return; }
   const today = todayKey(), cur = goalEntryFor(today);
@@ -1889,6 +1927,7 @@ $('#setForm').addEventListener('submit', ev => {
   }
   state.settings.unit = $('#sUnit').value === 'lb' ? 'lb' : 'kg';
   state.settings.usdaKey = usdaKey;
+  state.settings.aiUrl = aiUrl; state.settings.aiModel = $('#sAiModel').value.trim().slice(0, 80);
   const tokenChanged = state.settings.ghToken !== ghToken;
   state.settings.ghToken = ghToken;
   const age = parseFloat($('#cAge').value), hv = parseFloat($('#cHeight').value);
@@ -1916,7 +1955,7 @@ function markBackedUp() {
   save(); renderBanner(); if (setDlg.open) updateBackupInfo();
 }
 // Everything that leaves the device (backups, GitHub) omits personal keys
-const exportable = () => ({ ...state, settings: { ...state.settings, usdaKey: '', ghToken: '' } });
+const exportable = () => ({ ...state, settings: { ...state.settings, usdaKey: '', ghToken: '', aiUrl: '' } });
 function backupJson() {
   state.settings.lastBackup = Date.now();
   return JSON.stringify(exportable(), null, 2);
@@ -1967,7 +2006,7 @@ $('#importFile').addEventListener('change', async ev => {
     const parsed = JSON.parse(await file.text());
     if (!parsed || typeof parsed !== 'object' || !('log' in parsed || 'goals' in parsed || 'goalHistory' in parsed)) throw new Error('bad');
     if (!confirm('Replace all current data with this backup?')) return;
-    const keep = { usdaKey: state.settings.usdaKey, ghToken: state.settings.ghToken };
+    const keep = { usdaKey: state.settings.usdaKey, ghToken: state.settings.ghToken, aiUrl: state.settings.aiUrl };
     state = sanitize(parsed); Object.assign(state.settings, keep); save(); closeDlg(setDlg); render(); toast('Backup imported');
     syncNow({ force: true }); // an import replaces the GitHub copy too
   } catch { toast('That file is not a valid backup'); }
@@ -2122,7 +2161,7 @@ async function pushRemote() {
   setSyncBase(stamp);
 }
 function adoptRemote(r) {
-  const keep = { usdaKey: state.settings.usdaKey, ghToken: state.settings.ghToken };
+  const keep = { usdaKey: state.settings.usdaKey, ghToken: state.settings.ghToken, aiUrl: state.settings.aiUrl };
   state = r; Object.assign(state.settings, keep);
   setSyncBase(state.savedAt); save(false); render();
 }
@@ -2670,6 +2709,138 @@ $('#liftCsvBtn').addEventListener('click', () => {
     rows.push([k, esc(e.name), e.group, i + 1, s.w, s.r, r1(e1rmOf(s.w, s.r))]);
   });
   download(`lifts-${todayKey()}.csv`, rows.map(r => r.join(',')).join('\n'), 'text/csv');
+});
+
+/* ================= Local AI (Ollama): describe a meal, get estimates ================= */
+const AI_SCHEMA = {
+  type: 'object',
+  properties: { items: { type: 'array', maxItems: 12, items: { type: 'object',
+    properties: { name: { type: 'string' }, kcal: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' } },
+    required: ['name', 'kcal', 'protein', 'carbs', 'fat'] } } },
+  required: ['items'],
+};
+const AI_SYSTEM = 'You are a nutrition estimator inside a food diary app. The user describes what they ate, in English or Turkish. '
+  + 'Split it into separate food items. For each item estimate calories (kcal) and protein, carbohydrates and fat in grams for the whole amount eaten (not per 100 g), '
+  + 'using typical values from public nutrition databases such as USDA. If no amount is given, assume one typical serving. '
+  + 'Keep names short and include the amount, for example "2 eggs, boiled". Write names in the same language as the user. Reply with JSON only.';
+const AI_EXAMPLE_IN = '2 eggs and a slice of toast with butter';
+const AI_EXAMPLE_OUT = JSON.stringify({ items: [
+  { name: '2 eggs, boiled', kcal: 155, protein: 12.6, carbs: 1.1, fat: 10.6 },
+  { name: '1 slice toast with butter', kcal: 140, protein: 3, carbs: 13, fat: 8 },
+] });
+let aiItems = [], aiCtl = null;
+const aiBase = () => state.settings.aiUrl.replace(/\/+$/, '');
+function aiStatus(msg) { $('#aiStatus').textContent = msg || ''; }
+function aiReset() { if (aiCtl) aiCtl.abort(); aiItems = []; $('#aiText').value = ''; aiStatus(''); renderAiResults(); }
+
+// Turn whatever the model returned into clean, bounded items
+function parseAiItems(content) {
+  let data;
+  try { data = JSON.parse(content); }
+  catch { const m = String(content).match(/\{[\s\S]*\}/); if (!m) return []; try { data = JSON.parse(m[0]); } catch { return []; } }
+  const list = Array.isArray(data) ? data : data && Array.isArray(data.items) ? data.items : [];
+  const clamp = (v, max) => { const n = parseFloat(v); return Number.isFinite(n) && n > 0 ? Math.min(n, max) : 0; };
+  return list.slice(0, 12).map(it => {
+    const name = String(it && it.name || '').trim().slice(0, 80);
+    const p = r1(clamp(it && (it.protein ?? it.p), 500)), c = r1(clamp(it && (it.carbs ?? it.c), 800)), f = r1(clamp(it && (it.fat ?? it.f), 500));
+    let kcal = Math.round(clamp(it && it.kcal, 6000));
+    const implied = kcalOf({ p, c, f });
+    if (!kcal) kcal = Math.round(implied);
+    return { name, p, c, f, kcal, odd: kcal > 0 && Math.abs(kcal - implied) > Math.max(60, kcal * 0.3) };
+  }).filter(it => it.name && (it.kcal > 0 || it.p > 0));
+}
+async function aiEstimate() {
+  const text = $('#aiText').value.trim();
+  if (!state.settings.aiUrl) { aiStatus('Add your server address in Settings first.'); return; }
+  if (text.length < 2) { aiStatus('Describe what you ate first.'); return; }
+  if (aiCtl) aiCtl.abort();
+  const ctl = aiCtl = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, 90000);
+  $('#aiBtn').disabled = true; aiStatus('Thinking… the first request can take a few seconds.'); aiItems = []; renderAiResults();
+  try {
+    const res = await fetch(aiBase() + '/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal,
+      body: JSON.stringify({
+        model: state.settings.aiModel || 'qwen2.5:7b-instruct', stream: false, keep_alive: '30m', format: AI_SCHEMA,
+        options: { temperature: 0.2, num_ctx: 2048, num_predict: 700 },
+        messages: [
+          { role: 'system', content: AI_SYSTEM },
+          { role: 'user', content: AI_EXAMPLE_IN }, { role: 'assistant', content: AI_EXAMPLE_OUT },
+          { role: 'user', content: text },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(res.status === 404 ? 'Model not found. Check the model name in Settings.' : 'The AI server answered ' + res.status);
+    const data = await res.json();
+    aiItems = parseAiItems(data && data.message && data.message.content || '');
+    aiStatus(aiItems.length ? '' : 'The AI didn’t return any foods. Try rephrasing.');
+  } catch (err) {
+    if (err.name === 'AbortError' && !timedOut) return; // dialog closed or superseded
+    aiStatus(timedOut ? 'The AI took too long. Is the PC awake and the model loaded?'
+      : err instanceof TypeError ? 'Couldn’t reach your AI server. Check Tailscale is connected on this device and the address in Settings.'
+      : err.message || 'AI estimate failed.');
+  } finally { clearTimeout(timer); $('#aiBtn').disabled = false; renderAiResults(); }
+}
+function renderAiResults() {
+  const box = $('#aiResults');
+  box.hidden = !aiItems.length;
+  if (!aiItems.length) { box.replaceChildren(); return; }
+  const rows = aiItems.map(it => {
+    const row = h('div', 'airow');
+    row.append(h('b', null, (it.odd ? '⚠ ' : '') + it.name), h('span', 'm', `${it.kcal} kcal · P ${fmt(it.p)} · C ${fmt(it.c)} · F ${fmt(it.f)}`));
+    if (it.odd) row.firstChild.title = 'The calories and macros don’t quite add up. Worth a check.';
+    const ed = h('button', 'btn small', 'Edit'); ed.type = 'button';
+    ed.addEventListener('click', () => {
+      aiItems = aiItems.filter(x => x !== it); renderAiResults();
+      fillFromFood({ name: it.name, ...cleanNutr({ p: it.p, c: it.c, f: it.f, kcal: it.kcal }) });
+      $('#fServ').focus();
+    });
+    row.append(ed);
+    return row;
+  });
+  const tot = aiItems.reduce((t, it) => ({ kcal: t.kcal + it.kcal, p: t.p + it.p }), { kcal: 0, p: 0 });
+  const foot = h('div', 'aitotal');
+  const all = h('button', 'btn primary small', `Add all (${aiItems.length})`); all.type = 'button';
+  all.addEventListener('click', aiAddAll);
+  foot.append(h('span', null, `${Math.round(tot.kcal)} kcal · P ${fmt(tot.p)} g`), all);
+  box.replaceChildren(...rows, foot, h('div', 'attrib', 'Estimated by an AI, so numbers can be off. Tap Edit to adjust an item.'));
+}
+function aiAddAll() {
+  if (!aiItems.length) return;
+  const key = viewKey, meal = $('#fMeal').value;
+  const entries = aiItems.map(it => ({ id: uid(), name: it.name, meal, servings: 1, ...cleanNutr({ p: it.p, c: it.c, f: it.f, kcal: it.kcal }) }));
+  (state.log[key] ||= []).push(...entries);
+  save(); closeDlg(entryDlg); render();
+  const ids = new Set(entries.map(e => e.id));
+  toast(`Added ${entries.length} ${entries.length === 1 ? 'item' : 'items'} to ${meal}`, { undo: () => {
+    state.log[key] = (state.log[key] || []).filter(e => !ids.has(e.id));
+    if (!state.log[key].length) delete state.log[key];
+    save(); render();
+  } });
+}
+$('#aiBtn').addEventListener('click', aiEstimate);
+$('#aiText').addEventListener('keydown', ev => { if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); aiEstimate(); } });
+$('#aiTest').addEventListener('click', async () => {
+  const out = $('#aiTestOut'), raw = $('#sAiUrl').value.trim(), url = cleanAiUrl(raw);
+  if (!url) { out.textContent = 'Enter a valid server address first (https://…).'; return; }
+  const model = $('#sAiModel').value.trim() || 'qwen2.5:7b-instruct';
+  out.textContent = 'Connecting…';
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
+  try {
+    const res = await fetch(url + '/api/tags', { signal: ctl.signal });
+    if (!res.ok) throw new Error('The server answered ' + res.status);
+    const data = await res.json();
+    const names = (data.models || []).map(m => m.name);
+    const has = names.some(n => n === model || n.split(':')[0] === model.split(':')[0] && !model.includes(':'));
+    out.textContent = names.length
+      ? `Connected. ${has ? `“${model}” is installed.` : `“${model}” is not installed. Available: ${names.join(', ')}.`}`
+      : 'Connected, but no models are installed yet.';
+  } catch (err) {
+    out.textContent = err.name === 'AbortError' ? 'No answer in 10 seconds. Is the PC awake and Tailscale connected here?'
+      : err instanceof TypeError ? 'Couldn’t reach it. Check Tailscale is connected on this device, the address, and that OLLAMA_ORIGINS allows this site.'
+      : err.message || 'Connection failed.';
+  } finally { clearTimeout(timer); }
 });
 
 // Ask the browser not to evict our data under storage pressure

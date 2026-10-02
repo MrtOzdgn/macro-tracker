@@ -6,6 +6,9 @@ A private, no-account calorie, protein, carb and fat tracker. It is a single `in
 
 - Daily calorie and protein goals (plus carbs and fat), with rest and training day goals
 - Fast logging: repeat yesterday, saved foods and meals, quick add, swipe to delete with undo
+- Landing page with two apps: **Meals** and **Lifting**
+- Lifting tracker: sets and reps, estimated 1RM, personal records, double-progression suggestions, weekly volume, muscle-group balance
+- Describe a meal in plain language and a local AI model on your own PC estimates calories and macros (see [docs/local-llm-windows.md](docs/local-llm-windows.md))
 - Food search (Open Food Facts, with a USDA FoodData Central fallback) and barcode scanning
 - Optional fibre, sugar and sodium tracking
 - Weight trend, weekly insights, streaks and a consistency heatmap
